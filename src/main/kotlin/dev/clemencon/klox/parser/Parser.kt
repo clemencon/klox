@@ -82,17 +82,24 @@ class Parser(private val tokens: List<Token>) {
             consume(RIGHT_PAREN, "Expect ')' after expression.")
             return Grouping(expression)
         }
+
+        throw Error()
     }
 
     private fun match(vararg tokenType: TokenType): Boolean {
         tokenType.forEach {
             if (check(it)) {
-                advance();
+                advance()
                 return true
             }
         }
 
-        return false;
+        return false
+    }
+
+    private fun consume(tokenType: TokenType, message: String): Token {
+        if (check(tokenType)) return advance()
+        throw error(peek(), message)
     }
 
     private fun check(tokenType: TokenType): Boolean {
@@ -104,7 +111,7 @@ class Parser(private val tokens: List<Token>) {
 
     private fun advance(): Token {
         if (isAtEnd()) currentPosition++
-        return previous();
+        return previous()
     }
 
     private fun isAtEnd(): Boolean {
@@ -117,6 +124,11 @@ class Parser(private val tokens: List<Token>) {
 
     private fun previous(): Token {
         return tokens.get(currentPosition - 1)
+    }
+
+    private fun error(token: Token, message: String): ParseError {
+        Lox.error(token, message)
+        return ParseError()
     }
 
 }

@@ -3,6 +3,7 @@ package dev.clemencon.klox
 import dev.clemencon.klox.scanner.Scanner
 import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.ExitStatus.*
+import dev.clemencon.klox.scanner.TokenType.*
 import java.io.File
 import kotlin.collections.forEach
 import kotlin.system.exitProcess
@@ -22,6 +23,14 @@ class Lox {
         private fun report(line: Int, where: String, message: String) {
             System.err.println("[line $line] Error$where: $message")
             hadError = true
+        }
+
+        fun error(token: Token, message: String) {
+            if (token.type == EOF) {
+                report(token.lineNumber, " at end", message)
+            } else {
+                report(token.lineNumber, " at '${token.lexeme}'", message)
+            }
         }
     }
 
