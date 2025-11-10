@@ -37,15 +37,51 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun term(): Expression {
-        var expression: Expression = factor()
+        var expression = factor()
 
         while (match(MINUS, PLUS)) {
             val operator = previous()
-            val right: Expression = factor()
+            val right = factor()
             expression = Binary(expression, operator, right)
         }
 
         return expression
+    }
+
+    private fun factor(): Expression {
+        var expression = unary()
+
+        while (match(SLASH, STAR)) {
+            val operator = previous()
+            val right = unary()
+            expression = Binary(expression, operator, right)
+        }
+
+        return expression
+    }
+
+    private fun unary(): Expression {
+        if (match(BANG, MINUS)) {
+            val operator = previous()
+            val right = unary()
+            return Unary(operator, right)
+        }
+
+        return primary()
+    }
+
+    private fun primary(): Expression {
+        if (match(FALSE)) return Literal(false)
+        if (match(TRUE)) return Literal(true)
+        if (match(NIL)) return Literal(null)
+
+        if (match(NUMBER, STRING)) return Literal(previous().literal)
+
+        if (match(LEFT_PAREN)) {
+            val expression = expression()
+            consume(RIGHT_PAREN, "Expect ')' after expression.")
+            return Grouping(expression)
+        }
     }
 
     private fun match(vararg tokenType: TokenType): Boolean {
