@@ -119,7 +119,7 @@ class Parser(private val tokens: List<Token>) {
     // ju: Would it make sense to use a custom data type/collection?
 
     private fun advance(): Token {
-        if (isAtEnd()) currentPosition++
+        if (!isAtEnd()) currentPosition++
         return previous()
     }
 
