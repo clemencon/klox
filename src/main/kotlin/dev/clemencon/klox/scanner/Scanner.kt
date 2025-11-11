@@ -4,19 +4,21 @@ import dev.clemencon.klox.Lox
 import dev.clemencon.klox.scanner.TokenType.*
 
 /**
- * Converts source code into tokens.
+ * Lexical scanner for Lox source code.
+ * Converts raw source code into tokens using two position markers:
+ * - startPosition: where the current lexeme begins
+ * - currentPosition: the character being examined
  */
 class Scanner(private val sourceCode: String) {
     private val tokens = mutableListOf<Token>()
 
-    // StartPosition marks where the current lexeme begins.
-    // CurrentPosition is the next character to consume.
     private var startPosition = 0
     private var currentPosition = 0
     private var lineNumber = 1
 
     /**
-     * Scans the source and returns tokens, with EOF appended.
+     * Scans the entire source code and returns tokens including a final EOF.
+     * Processes one lexeme per iteration, marking the start position before each scan operation.
      */
     fun scanTokens(): List<Token> {
         while (!isAtEnd()) {
@@ -29,7 +31,9 @@ class Scanner(private val sourceCode: String) {
     }
 
     /**
-     * Scans a single token. Errors are reported but don't stop scanning.
+     * Recognizes and emits a single token.
+     * Multi-character operators use lookahead via match().
+     * Complex literals (strings, numbers, identifiers) delegate to specialized methods.
      */
     private fun scanToken() {
         val character = advance()
@@ -50,7 +54,6 @@ class Scanner(private val sourceCode: String) {
             character == '<' -> addToken(if (match('=')) LESS_EQUAL else LESS)
             character == '>' -> addToken(if (match('=')) GREATER_EQUAL else GREATER)
 
-            // '//' starts a comment that runs to end-of-line.
             character == '/' -> if (match('/')) {
                 while (peek() != '\n' && !isAtEnd()) advance()
             } else {
@@ -64,18 +67,18 @@ class Scanner(private val sourceCode: String) {
             character.isDigit() -> number()
             character.isLetter() || character == '_' -> identifier()
 
-            // Report unrecognized characters but keep scanning.
             else -> Lox.error(lineNumber, "Unexpected character.")
         }
     }
 
     /**
-     * Scans a number literal. Supports decimal numbers.
+     * Scans a number literal (integer or decimal).
+     * Uses two-character lookahead to consume '.' only when followed by a digit.
+     * Prevents "123.toString()" from being lexed as "123." + "toString()".
      */
     private fun number() {
         while (peek().isDigit()) advance()
 
-        // Look for a fractional part.
         if (peek() == '.' && peekNext().isDigit()) {
             advance()
             while (peek().isDigit()) advance()
@@ -86,7 +89,9 @@ class Scanner(private val sourceCode: String) {
     }
 
     /**
-     * Scans reserved words and identifiers.
+     * Scans an identifier or keyword.
+     * Consumes all valid identifier characters, then checks the complete lexeme against the keywords map.
+     * This deferred classification ensures "orchid" is an identifier, not the keyword "or" followed by "child".
      */
     private fun identifier() {
         while (peek().isLetterOrDigit() || peek() == '_') advance()
@@ -105,7 +110,9 @@ class Scanner(private val sourceCode: String) {
     private fun advance() = sourceCode[currentPosition++]
 
     /**
-     * Scans a string literal. Supports multi-line strings.
+     * Scans a string literal enclosed in double quotes.
+     * Lox strings can span multiple lines, so newlines are tracked for error reporting.
+     * Literal value excludes the surrounding quotes.
      */
     private fun string() {
         while (peek() != '"' && !isAtEnd()) {
@@ -124,7 +131,9 @@ class Scanner(private val sourceCode: String) {
     }
 
     /**
-     * Consumes the current character only if it matches expected.
+     * Conditional lookahead for two-character operators.
+     * Consumes the current character only if it matches expected, returning true.
+     * Otherwise, leaves it for future processing and returns false.
      */
     private fun match(expected: Char): Boolean {
         if (isAtEnd()) return false
@@ -134,7 +143,8 @@ class Scanner(private val sourceCode: String) {
     }
 
     /**
-     * Returns the current character without consuming it.
+     * Returns current character without consuming it.
+     * Returns '\u0000' if at end of source.
      */
     private fun peek(): Char {
         if (isAtEnd()) return '\u0000'
@@ -142,7 +152,8 @@ class Scanner(private val sourceCode: String) {
     }
 
     /**
-     * Returns the next character without consuming anything.
+     * Returns next character without consuming it.
+     * Returns '\u0000' if beyond end. Used for decimal point lookahead.
      */
     private fun peekNext(): Char {
         if (currentPosition >= sourceCode.lastIndex) return '\u0000'
@@ -152,6 +163,10 @@ class Scanner(private val sourceCode: String) {
     private fun isAtEnd() = currentPosition >= sourceCode.length
 }
 
+/**
+ * Reserved keywords in Lox.
+ * Used to distinguish keywords from identifiers during scanning.
+ */
 private val keywords = mapOf(
     "and" to AND,
     "class" to CLASS,
