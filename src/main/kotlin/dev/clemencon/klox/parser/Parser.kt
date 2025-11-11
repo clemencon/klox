@@ -1,5 +1,6 @@
 package dev.clemencon.klox.parser
 
+import dev.clemencon.klox.Lox
 import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.scanner.TokenType
 import dev.clemencon.klox.scanner.TokenType.*
@@ -130,5 +131,6 @@ class Parser(private val tokens: List<Token>) {
         Lox.error(token, message)
         return ParseError()
     }
-
 }
+
+class ParseError: RuntimeException() {}
