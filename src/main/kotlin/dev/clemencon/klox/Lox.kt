@@ -3,9 +3,9 @@ package dev.clemencon.klox
 import dev.clemencon.klox.scanner.Scanner
 import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.ExitStatus.*
+import dev.clemencon.klox.parser.Parser
 import dev.clemencon.klox.scanner.TokenType.*
 import java.io.File
-import kotlin.collections.forEach
 import kotlin.system.exitProcess
 
 /**
@@ -54,7 +54,11 @@ class Lox {
 
     private fun run(sourceCode: String) {
         val tokens: List<Token> = Scanner(sourceCode).scanTokens()
-        // Temporary: print tokens for debugging.
-        tokens.forEach { println(it) }
+        val parser = Parser(tokens)
+        val expression = parser.parse();
+
+        if (hadError) return
+
+        println(expression)
     }
 }

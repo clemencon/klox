@@ -25,7 +25,7 @@ data class Grouping(
 
 // The print function will be removed.
 
-fun Expression.printAst() = when (this) {
+fun Expression.toString() = when (this) {
     is Binary -> parenthesize(this.operator.lexeme, this.left, this.right)
     is Grouping -> parenthesize("group", this.expression)
     is Literal -> if (this.value == null) "nil" else this.value.toString()
@@ -34,6 +34,6 @@ fun Expression.printAst() = when (this) {
 
 fun parenthesize(name: String, vararg expression: Expression): String = buildString {
     append("($name")
-    expression.forEach { append(" ${it.printAst()}") }
+    expression.forEach { append(" ${it.toString()}") }
     append(")")
 }

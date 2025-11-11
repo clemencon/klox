@@ -8,6 +8,14 @@ import dev.clemencon.klox.scanner.TokenType.*
 class Parser(private val tokens: List<Token>) {
     private var currentPosition: Int = 0
 
+    fun parse(): Expression? {
+        return try {
+            expression()
+        } catch (_: ParseError) {
+            null
+        }
+    }
+
     private fun expression(): Expression {
         return equality()
     }
@@ -84,7 +92,7 @@ class Parser(private val tokens: List<Token>) {
             return Grouping(expression)
         }
 
-        throw Error()
+        throw error(peek(), "Expect expression.")
     }
 
     private fun match(vararg tokenType: TokenType): Boolean {
@@ -131,6 +139,19 @@ class Parser(private val tokens: List<Token>) {
         Lox.error(token, message)
         return ParseError()
     }
+
+    private fun synchronize() {
+        advance()
+
+        while (!isAtEnd()) {
+            if (previous().type == SEMICOLON) return
+
+            when (peek().type) {
+                CLASS, FUN, VAR, FOR, IF, WHILE, PRINT, RETURN -> return
+                else -> advance()
+            }
+        }
+    }
 }
 
-class ParseError: RuntimeException() {}
+class ParseError : RuntimeException()
