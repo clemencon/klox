@@ -1,6 +1,7 @@
 package dev.clemencon.klox.interpreter
 
 import dev.clemencon.klox.parser.*
+import dev.clemencon.klox.scanner.TokenType
 import dev.clemencon.klox.scanner.TokenType.*
 
 // ju: Extract each evaluation to a function?
@@ -10,7 +11,13 @@ fun Expression.evaluate(): Any? = when (this) {
         val rightOperand = this.right.evaluate()
 
         when (this.operator.type) {
+            GREATER -> leftOperand as Double > rightOperand as Double
+            GREATER_EQUAL -> leftOperand as Double >= rightOperand as Double
+            LESS -> (leftOperand as Double) < rightOperand as Double
+            LESS_EQUAL -> leftOperand as Double <= rightOperand as Double
             MINUS -> leftOperand as Double - rightOperand as Double
+            BANG_EQUAL -> leftOperand != rightOperand
+            EQUAL_EQUAL -> leftOperand == rightOperand
             PLUS -> when {
                 leftOperand is Double && rightOperand is Double -> leftOperand + rightOperand
                 leftOperand is String && rightOperand is String -> leftOperand + rightOperand
