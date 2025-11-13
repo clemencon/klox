@@ -11,7 +11,11 @@ fun Expression.evaluate(): Any? = when (this) {
 
         when (this.operator.type) {
             MINUS -> leftOperand as Double - rightOperand as Double
-            PLUS -> TODO()
+            PLUS -> when {
+                leftOperand is Double && rightOperand is Double -> leftOperand + rightOperand
+                leftOperand is String && rightOperand is String -> leftOperand + rightOperand
+                else -> throw Error() // ju: throw RuntimeError instead.
+            }
             SLASH -> leftOperand as Double / rightOperand as Double
             STAR -> leftOperand as Double * rightOperand as Double
             else -> throw Error() // ju: For now? Or runtime error? It should be unreachable.
