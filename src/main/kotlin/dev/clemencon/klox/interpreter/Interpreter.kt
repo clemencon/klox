@@ -1,43 +1,84 @@
 package dev.clemencon.klox.interpreter
 
 import dev.clemencon.klox.parser.*
-import dev.clemencon.klox.scanner.TokenType
+import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.scanner.TokenType.*
 
-// ju: Extract each evaluation to a function?
 fun Expression.evaluate(): Any? = when (this) {
-    is Binary -> {
-        val leftOperand = this.left.evaluate()
-        val rightOperand = this.right.evaluate()
+    is Binary -> evaluate(this)
+    is Grouping -> evaluate(this)
+    is Literal -> evaluate(this)
+    is Unary -> evaluate(this)
+}
 
-        when (this.operator.type) {
-            GREATER -> leftOperand as Double > rightOperand as Double
-            GREATER_EQUAL -> leftOperand as Double >= rightOperand as Double
-            LESS -> (leftOperand as Double) < rightOperand as Double
-            LESS_EQUAL -> leftOperand as Double <= rightOperand as Double
-            MINUS -> leftOperand as Double - rightOperand as Double
-            BANG_EQUAL -> leftOperand != rightOperand
-            EQUAL_EQUAL -> leftOperand == rightOperand
-            PLUS -> when {
-                leftOperand is Double && rightOperand is Double -> leftOperand + rightOperand
-                leftOperand is String && rightOperand is String -> leftOperand + rightOperand
-                else -> throw Error() // ju: throw RuntimeError instead.
-            }
-            SLASH -> leftOperand as Double / rightOperand as Double
-            STAR -> leftOperand as Double * rightOperand as Double
-            else -> throw Error() // ju: For now? Or runtime error? It should be unreachable.
+// ju: Does it make sense to make these private?
+private fun evaluate(binary: Binary): Any {
+    val left = binary.left.evaluate()
+    val right = binary.right.evaluate()
+
+    return when (binary.operator.type) {
+        BANG_EQUAL -> left != right
+        EQUAL_EQUAL -> left == right
+        GREATER -> {
+            val (left, right) = requireNumberOperands(binary.operator, left, right)
+            left > right
         }
+
+        GREATER_EQUAL -> {
+            val (left, right) = requireNumberOperands(binary.operator, left, right)
+            left >= right
+        }
+
+        LESS -> {
+            val (left, right) = requireNumberOperands(binary.operator, left, right)
+            left < right
+        }
+
+        LESS_EQUAL -> {
+            val (left, right) = requireNumberOperands(binary.operator, left, right)
+            left <= right
+        }
+
+        SLASH -> {
+            val (left, right) = requireNumberOperands(binary.operator, left, right)
+            left / right
+        }
+
+        STAR -> {
+            val (left, right) = requireNumberOperands(binary.operator, left, right)
+            left * right
+        }
+
+        MINUS -> {
+            val (left, right) = requireNumberOperands(binary.operator, left, right)
+            left - right
+        }
+
+        PLUS -> when {
+            left is Double && right is Double -> left + right
+            left is String && right is String -> left + right
+            else -> throw RuntimeError(binary.operator, "Operands must be two numbers or two strings.")
+        }
+
+        else -> error("Unreachable: Unknown binary operator ${binary.operator.type}")
     }
+}
 
-    is Grouping -> this.expression.evaluate()
-    is Literal -> this.value
-    is Unary -> {
-        val operand = this.right.evaluate()
-        when (this.operator.type) {
-            MINUS -> -(operand as Double)
-            BANG -> !isTruthy(operand)
-            else -> throw Error() // ju: For now? Or runtime error? It should be unreachable.
-        }
+private fun evaluate(grouping: Grouping): Any? {
+    return grouping.expression.evaluate()
+}
+
+private fun evaluate(literal: Literal): Any? {
+    return literal.value
+}
+
+private fun evaluate(unary: Unary): Any {
+    val right = unary.right.evaluate()
+
+    return when (unary.operator.type) {
+        MINUS -> -requireNumberOperand(unary.operator, right)
+        BANG -> !isTruthy(right)
+        else -> error("Unreachable: Unknown unary operator ${unary.operator.type}")
     }
 }
 
@@ -45,4 +86,18 @@ private fun isTruthy(value: Any?) = when (value) {
     null -> false
     is Boolean -> value
     else -> true
+}
+
+private fun requireNumberOperand(operator: Token, right: Any?): Double {
+    if (right !is Double) {
+        throw RuntimeError(operator, "Operand must be a number.")
+    }
+    return right
+}
+
+private fun requireNumberOperands(operator: Token, left: Any?, right: Any?): Pair<Double, Double> {
+    if (left !is Double || right !is Double) {
+        throw RuntimeError(operator, "Operands must be numbers.")
+    }
+    return left to right
 }
