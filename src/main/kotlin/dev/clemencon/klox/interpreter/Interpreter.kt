@@ -6,6 +6,10 @@ import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.scanner.TokenType.*
 
 class Interpreter {
+    /**
+     * Entry point for evaluating and printing expressions.
+     * Catches runtime errors (type mismatches, invalid operations) to prevent crashes in REPL mode.
+     */
     fun interpret(expression: Expression) {
         try {
             val value = expression.evaluate()
@@ -16,6 +20,9 @@ class Interpreter {
     }
 }
 
+/**
+ * Dispatches to the appropriate evaluation function based on expression type.
+ */
 private fun Expression.evaluate(): Any? = when (this) {
     is Binary -> evaluate(this)
     is Grouping -> evaluate(this)
@@ -23,6 +30,10 @@ private fun Expression.evaluate(): Any? = when (this) {
     is Unary -> evaluate(this)
 }
 
+/**
+ * Evaluates binary expressions using post-order traversal: left, right, then operator.
+ * Type checking happens before operations to provide clear error messages with token locations.
+ */
 private fun evaluate(binary: Binary): Any {
     val left = binary.left.evaluate()
     val right = binary.right.evaluate()
@@ -65,6 +76,7 @@ private fun evaluate(binary: Binary): Any {
             left - right
         }
 
+        // PLUS is overloaded: supports both numeric addition and string concatenation.
         PLUS -> when {
             left is Double && right is Double -> left + right
             left is String && right is String -> left + right
@@ -93,18 +105,30 @@ private fun evaluate(unary: Unary): Any {
     }
 }
 
+/**
+ * Lox's truthiness: false and nil are falsy, everything else is truthy.
+ * 0 and empty strings are truthy.
+ */
 private fun isTruthy(value: Any?) = when (value) {
     null -> false
     is Boolean -> value
     else -> true
 }
 
+/**
+ * Converts values to Lox string representations.
+ * Prints integers without ".0" suffix for cleaner output (e.g., "42" not "42.0").
+ */
 private fun stringify(value: Any?) = when (value) {
     null -> "nil"
     is Double -> value.toString().removeSuffix(".0")
     else -> value.toString()
 }
 
+/**
+ * Validates the operand is a number before arithmetic operations.
+ * Throws RuntimeError with token location instead of letting ClassCastException propagate.
+ */
 private fun requireNumberOperand(operator: Token, right: Any?): Double {
     if (right !is Double) {
         throw RuntimeError(operator, "Operand must be a number.")
@@ -112,6 +136,10 @@ private fun requireNumberOperand(operator: Token, right: Any?): Double {
     return right
 }
 
+/**
+ * Validates both operands are numbers before arithmetic operations.
+ * Throws RuntimeError with token location instead of letting ClassCastException propagate.
+ */
 private fun requireNumberOperands(operator: Token, left: Any?, right: Any?): Pair<Double, Double> {
     if (left !is Double || right !is Double) {
         throw RuntimeError(operator, "Operands must be numbers.")

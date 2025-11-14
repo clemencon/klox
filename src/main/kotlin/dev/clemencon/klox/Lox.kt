@@ -30,6 +30,10 @@ class Lox {
          */
         var hadError = false
 
+        /**
+         * Tracks runtime errors during expression evaluation.
+         * Causes exit code 70 in file mode. In REPL mode, allows continued execution.
+         */
         var hadRuntimeError = false
 
         /**
@@ -40,6 +44,10 @@ class Lox {
             report(line, "", message)
         }
 
+        /**
+         * Reports a runtime error with token location.
+         * Used by the interpreter for type mismatches and invalid operations during evaluation.
+         */
         fun runtimeError(error: RuntimeError) {
             System.err.println("${error.message}\n[line ${error.token.lineNumber}]")
             hadRuntimeError = true
