@@ -7,5 +7,6 @@ package dev.clemencon.klox
 enum class ExitStatus(val code: Int) {
     OK(code = 0),
     USAGE(code = 64),
-    DATAERR(code = 65)
+    DATAERR(code = 65),
+    EX_SOFTWARE(code = 70)
 }

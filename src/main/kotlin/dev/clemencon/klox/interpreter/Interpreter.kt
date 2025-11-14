@@ -1,17 +1,28 @@
 package dev.clemencon.klox.interpreter
 
+import dev.clemencon.klox.Lox
 import dev.clemencon.klox.parser.*
 import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.scanner.TokenType.*
 
-fun Expression.evaluate(): Any? = when (this) {
+class Interpreter {
+    fun interpret(expression: Expression) {
+        try {
+            val value = expression.evaluate()
+            println(stringify(value))
+        } catch (error: RuntimeError) {
+            Lox.runtimeError(error)
+        }
+    }
+}
+
+private fun Expression.evaluate(): Any? = when (this) {
     is Binary -> evaluate(this)
     is Grouping -> evaluate(this)
     is Literal -> evaluate(this)
     is Unary -> evaluate(this)
 }
 
-// ju: Does it make sense to make these private?
 private fun evaluate(binary: Binary): Any {
     val left = binary.left.evaluate()
     val right = binary.right.evaluate()
@@ -86,6 +97,12 @@ private fun isTruthy(value: Any?) = when (value) {
     null -> false
     is Boolean -> value
     else -> true
+}
+
+private fun stringify(value: Any?) = when (value) {
+    null -> "nil"
+    is Double -> value.toString().removeSuffix(".0")
+    else -> value.toString()
 }
 
 private fun requireNumberOperand(operator: Token, right: Any?): Double {

@@ -3,6 +3,8 @@ package dev.clemencon.klox
 import dev.clemencon.klox.scanner.Scanner
 import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.ExitStatus.*
+import dev.clemencon.klox.interpreter.Interpreter
+import dev.clemencon.klox.interpreter.RuntimeError
 import dev.clemencon.klox.parser.Parser
 import dev.clemencon.klox.scanner.TokenType.*
 import java.io.File
@@ -16,11 +18,19 @@ import kotlin.system.exitProcess
 class Lox {
     companion object {
         /**
+         * The interpreter instance.
+         * Reused across successive calls to run() in REPL mode to preserve global variables.
+         */
+        private val interpreter = Interpreter()
+
+        /**
          * Tracks whether errors occurred during scanning or parsing.
          * Prevents execution of malformed code. In file mode, errors cause immediate exit.
          * In REPL mode, reset after each line to allow recovery without restarting.
          */
         var hadError = false
+
+        var hadRuntimeError = false
 
         /**
          * Reports an error at a line number.
@@ -28,6 +38,11 @@ class Lox {
          */
         fun error(line: Int, message: String) {
             report(line, "", message)
+        }
+
+        fun runtimeError(error: RuntimeError) {
+            System.err.println("${error.message}\n[line ${error.token.lineNumber}]")
+            hadRuntimeError = true
         }
 
         /**
@@ -63,6 +78,7 @@ class Lox {
         val sourceCode = File(pathname).readText()
         run(sourceCode)
         if (hadError) exitProcess(DATAERR.code)
+        if (hadRuntimeError) exitProcess(EX_SOFTWARE.code)
     }
 
     /**
@@ -82,16 +98,16 @@ class Lox {
 
     /**
      * Executes the interpreter pipeline on source code.
-     * Orchestrates scanning (source → tokens) and parsing (tokens → AST).
-     * Currently, prints the parsed expression for verification; evaluation phase will be added later.
+     * Orchestrates scanning (source → tokens), parsing (tokens → AST), and interpretation (evaluates AST).
      */
     private fun run(sourceCode: String) {
         val tokens: List<Token> = Scanner(sourceCode).scanTokens()
         val parser = Parser(tokens)
-        val expression = parser.parse();
+        val expression = parser.parse()
 
-        if (hadError) return
+        // Stop if there was a syntax error.
+        if (hadError || expression == null) return
 
-        println(expression)
+        interpreter.interpret(expression)
     }
 }
