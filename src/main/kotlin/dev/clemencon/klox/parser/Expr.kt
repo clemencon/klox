@@ -3,48 +3,30 @@ package dev.clemencon.klox.parser
 import dev.clemencon.klox.scanner.Token
 
 /**
- * AST representation for Lox expressions.
- * Models expressions as a tree where leaf nodes are literals and interior nodes are operators with operand subtrees.
- * Sealed interface enables exhaustive pattern matching,
- * allowing new operations (evaluation, type checking, pretty printing) without modifying expression classes.
+ * Expression AST. Sealed interface enables exhaustive when() matching
+ * and adding operations (evaluation, type checking) without modifying these classes.
  */
 sealed interface Expr
 
-/**
- * Literal value expression.
- * Leaf nodes representing constants: numbers, strings, booleans, nil.
- * Evaluate to themselves.
- */
+/** Literal constants: numbers, strings, booleans, nil. */
 data class Literal(
     val value: Any?
 ) : Expr
 
-/**
- * Unary operator expression.
- * Prefix operators: logical NOT (!) and arithmetic negation (-).
- * Operator token contains type and source location for error reporting.
- */
+/** Unary operators: ! and -. Token provides operator type and line number for errors. */
 data class Unary(
     val operator: Token,
     val right: Expr
 ) : Expr
 
-/**
- * Binary operator expression.
- * Infix operators: arithmetic (+, -, *, /), comparison (==, !=, <, >, <=, >=), and logical (and, or).
- * Tree structure encodes precedence: "1 + 2 * 3" has multiplication as a subtree of addition,
- * ensuring it evaluates first.
- */
+/** Binary operators: +, -, *, /, ==, !=, <, >, <=, >=. Tree structure encodes precedence: '1 + 2 * 3' → + (1, * (2, 3)). */
 data class Binary(
     val left: Expr,
     val operator: Token,
     val right: Expr
 ) : Expr
 
-/**
- * Grouping expression (parenthesized subexpression).
- * Allows explicit control over evaluation order. "(2 + 3) * 4" forces addition before multiplication.
- */
+/** Parenthesized expression. Overrides precedence: '(2 + 3) * 4' forces addition first. */
 data class Grouping(
     val expr: Expr
 ) : Expr

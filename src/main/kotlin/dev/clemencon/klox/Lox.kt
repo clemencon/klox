@@ -1,73 +1,46 @@
 package dev.clemencon.klox
 
-import dev.clemencon.klox.scanner.Scanner
-import dev.clemencon.klox.scanner.Token
-import dev.clemencon.klox.ExitStatus.*
+import dev.clemencon.klox.ExitStatus.DATAERR
+import dev.clemencon.klox.ExitStatus.EX_SOFTWARE
 import dev.clemencon.klox.interpreter.Interpreter
 import dev.clemencon.klox.interpreter.RuntimeError
 import dev.clemencon.klox.parser.Parser
-import dev.clemencon.klox.scanner.TokenType.*
+import dev.clemencon.klox.scanner.Scanner
+import dev.clemencon.klox.scanner.Token
+import dev.clemencon.klox.scanner.TokenType.EOF
 import java.io.File
 import kotlin.system.exitProcess
 
-/**
- * The main Lox interpreter class.
- * Orchestrates the interpreter pipeline and centralizes error reporting.
- * Supports file and REPL execution modes.
- */
+/** Orchestrates the interpreter pipeline and centralizes error reporting. */
 class Lox {
     companion object {
-        /**
-         * The interpreter instance.
-         * Reused across successive calls to run() in REPL mode to preserve global variables.
-         */
+        /** Reused across REPL runs to preserve state. */
         private val interpreter = Interpreter()
 
-        /**
-         * Tracks whether errors occurred during scanning or parsing.
-         * Prevents execution of malformed code. In file mode, errors cause immediate exit.
-         * In REPL mode, reset after each line to allow recovery without restarting.
-         */
+        /** Tracks scan/parse errors. Prevents execution of malformed code; reset after each REPL line. */
         var hadError = false
 
-        /**
-         * Tracks runtime errors during expression evaluation.
-         * Causes exit code 70 in file mode. In REPL mode, allows continued execution.
-         */
+        /** Tracks runtime errors. Causes exit code 70 in file mode. */
         var hadRuntimeError = false
 
-        /**
-         * Reports an error at a line number.
-         * Used by the scanner for errors without associated tokens (unexpected characters, unterminated strings).
-         */
+        /** Reports scan errors without token context (unexpected characters, unterminated strings). */
         fun error(line: Int, message: String) {
             report(line, "", message)
         }
 
-        /**
-         * Reports a runtime error with token location.
-         * Used by the interpreter for type mismatches and invalid operations during evaluation.
-         */
+        /** Reports runtime errors with token location for context. */
         fun runtimeError(error: RuntimeError) {
             System.err.println("${error.message}\n[line ${error.token.lineNumber}]")
             hadRuntimeError = true
         }
 
-        /**
-         * Core error reporting function.
-         * Centralizes error presentation so scanner and parser only detect problems.
-         * Error formatting can be changed here without modifying detection logic.
-         */
+        /** Centralizes error formatting. Scanner and parser detect; this reports. */
         private fun report(line: Int, where: String, message: String) {
             System.err.println("[line $line] Error$where: $message")
             hadError = true
         }
 
-        /**
-         * Reports an error associated with a token.
-         * Used by the parser for token-specific errors.
-         * Shows the problematic lexeme for context, except for EOF where "at end" is clearer.
-         */
+        /** Reports parse errors. Shows lexeme for context, except EOF uses 'at end'. */
         fun error(token: Token, message: String) {
             if (token.type == EOF) {
                 report(token.lineNumber, " at end", message)
@@ -77,11 +50,7 @@ class Lox {
         }
     }
 
-    /**
-     * Executes a Lox source file.
-     * Exits with DATAERR code if errors are detected during scanning or parsing.
-     * This prevents running malformed programs.
-     */
+    /** Runs a Lox file. Exits with error code if scan/parse errors occur. */
     fun runFile(pathname: String) {
         val sourceCode = File(pathname).readText()
         run(sourceCode)
@@ -89,12 +58,7 @@ class Lox {
         if (hadRuntimeError) exitProcess(EX_SOFTWARE.code)
     }
 
-    /**
-     * Runs an interactive REPL.
-     * Unlike file mode, errors don't terminate the session.
-     * The error flag is reset after each line to allow experimentation and recovery without restarting.
-     * Exits on EOF (Ctrl+D on Unix).
-     */
+    /** Interactive REPL. Errors don't terminate; hadError reset after each line. */
     fun runPrompt() {
         while (true) {
             print("> ")
@@ -104,10 +68,7 @@ class Lox {
         }
     }
 
-    /**
-     * Executes the interpreter pipeline on source code.
-     * Orchestrates scanning (source → tokens), parsing (tokens → AST), and interpretation (evaluates AST).
-     */
+    /** Interpreter pipeline: source → tokens → AST → evaluation. */
     private fun run(sourceCode: String) {
         val tokens: List<Token> = Scanner(sourceCode).scanTokens()
         val parser = Parser(tokens)

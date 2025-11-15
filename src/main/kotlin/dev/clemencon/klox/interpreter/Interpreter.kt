@@ -5,6 +5,7 @@ import dev.clemencon.klox.parser.*
 import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.scanner.TokenType.*
 
+/** Tree-walk interpreter. Executes statements and catches runtime errors. */
 class Interpreter {
     fun interpret(statements: List<Stmt>) {
         try {
@@ -15,17 +16,13 @@ class Interpreter {
     }
 }
 
-/**
- * Dispatches to the appropriate execution function based on statement type.
- */
+/** Executes statements using polymorphic dispatch. */
 private fun Stmt.execute() = when (this) {
     is Expression -> expression.evaluate()
     is Print -> println(stringify(expression.evaluate()))
 }
 
-/**
- * Dispatches to the appropriate evaluation function based on expression type.
- */
+/** Evaluates expressions using polymorphic dispatch. */
 private fun Expr.evaluate(): Any? = when (this) {
     is Binary -> evaluate(this)
     is Grouping -> evaluate(this)
@@ -33,10 +30,7 @@ private fun Expr.evaluate(): Any? = when (this) {
     is Unary -> evaluate(this)
 }
 
-/**
- * Evaluates binary expressions using post-order traversal: left, right, then operator.
- * Type checking happens before operations to provide clear error messages with token locations.
- */
+/** Binary operators. Type-checks operands to throw RuntimeError (with token location) instead of ClassCastException. */
 private fun evaluate(binary: Binary): Any {
     val left = binary.left.evaluate()
     val right = binary.right.evaluate()
@@ -79,7 +73,7 @@ private fun evaluate(binary: Binary): Any {
             left - right
         }
 
-        // PLUS is overloaded: supports both numeric addition and string concatenation.
+        // PLUS supports both number addition and string concatenation.
         PLUS -> when {
             left is Double && right is Double -> left + right
             left is String && right is String -> left + right
@@ -90,14 +84,11 @@ private fun evaluate(binary: Binary): Any {
     }
 }
 
-private fun evaluate(grouping: Grouping): Any? {
-    return grouping.expr.evaluate()
-}
+private fun evaluate(grouping: Grouping): Any? = grouping.expr.evaluate()
 
-private fun evaluate(literal: Literal): Any? {
-    return literal.value
-}
+private fun evaluate(literal: Literal): Any? = literal.value
 
+/** Unary operators. */
 private fun evaluate(unary: Unary): Any {
     val right = unary.right.evaluate()
 
@@ -108,30 +99,21 @@ private fun evaluate(unary: Unary): Any {
     }
 }
 
-/**
- * Lox's truthiness: false and nil are falsy, everything else is truthy.
- * 0 and empty strings are truthy.
- */
+/** Lox truthiness: only false and nil are falsy, 0 and "" are truthy. */
 private fun isTruthy(value: Any?) = when (value) {
     null -> false
     is Boolean -> value
     else -> true
 }
 
-/**
- * Converts values to Lox string representations.
- * Prints integers without ".0" suffix for cleaner output (e.g., "42" not "42.0").
- */
+/** Converts to Lox string representation. Strips ".0" suffix: 42.0 → "42". */
 private fun stringify(value: Any?) = when (value) {
     null -> "nil"
     is Double -> value.toString().removeSuffix(".0")
     else -> value.toString()
 }
 
-/**
- * Validates the operand is a number before arithmetic operations.
- * Throws RuntimeError with token location instead of letting ClassCastException propagate.
- */
+/** Type-checks unary operand. Throws RuntimeError (with token location) instead of ClassCastException. */
 private fun requireNumberOperand(operator: Token, right: Any?): Double {
     if (right !is Double) {
         throw RuntimeError(operator, "Operand must be a number.")
@@ -139,10 +121,7 @@ private fun requireNumberOperand(operator: Token, right: Any?): Double {
     return right
 }
 
-/**
- * Validates both operands are numbers before arithmetic operations.
- * Throws RuntimeError with token location instead of letting ClassCastException propagate.
- */
+/** Type-checks binary operands. Throws RuntimeError (with token location) instead of ClassCastException. */
 private fun requireNumberOperands(operator: Token, left: Any?, right: Any?): Pair<Double, Double> {
     if (left !is Double || right !is Double) {
         throw RuntimeError(operator, "Operands must be numbers.")
