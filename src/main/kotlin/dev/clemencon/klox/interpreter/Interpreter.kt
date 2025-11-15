@@ -6,14 +6,9 @@ import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.scanner.TokenType.*
 
 class Interpreter {
-    /**
-     * Entry point for evaluating and printing expressions.
-     * Catches runtime errors (type mismatches, invalid operations) to prevent crashes in REPL mode.
-     */
-    fun interpret(expression: Expression) {
+    fun interpret(statements: List<Stmt>) {
         try {
-            val value = expression.evaluate()
-            println(stringify(value))
+            statements.forEach { it.execute() }
         } catch (error: RuntimeError) {
             Lox.runtimeError(error)
         }
@@ -21,9 +16,17 @@ class Interpreter {
 }
 
 /**
+ * Dispatches to the appropriate execution function based on statement type.
+ */
+private fun Stmt.execute() = when (this) {
+    is Expression -> expression.evaluate()
+    is Print -> println(stringify(expression.evaluate()))
+}
+
+/**
  * Dispatches to the appropriate evaluation function based on expression type.
  */
-private fun Expression.evaluate(): Any? = when (this) {
+private fun Expr.evaluate(): Any? = when (this) {
     is Binary -> evaluate(this)
     is Grouping -> evaluate(this)
     is Literal -> evaluate(this)
@@ -88,7 +91,7 @@ private fun evaluate(binary: Binary): Any {
 }
 
 private fun evaluate(grouping: Grouping): Any? {
-    return grouping.expression.evaluate()
+    return grouping.expr.evaluate()
 }
 
 private fun evaluate(literal: Literal): Any? {

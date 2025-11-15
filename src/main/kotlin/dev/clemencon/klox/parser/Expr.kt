@@ -8,7 +8,7 @@ import dev.clemencon.klox.scanner.Token
  * Sealed interface enables exhaustive pattern matching,
  * allowing new operations (evaluation, type checking, pretty printing) without modifying expression classes.
  */
-sealed interface Expression
+sealed interface Expr
 
 /**
  * Literal value expression.
@@ -17,7 +17,7 @@ sealed interface Expression
  */
 data class Literal(
     val value: Any?
-) : Expression
+) : Expr
 
 /**
  * Unary operator expression.
@@ -26,8 +26,8 @@ data class Literal(
  */
 data class Unary(
     val operator: Token,
-    val right: Expression
-) : Expression
+    val right: Expr
+) : Expr
 
 /**
  * Binary operator expression.
@@ -36,15 +36,15 @@ data class Unary(
  * ensuring it evaluates first.
  */
 data class Binary(
-    val left: Expression,
+    val left: Expr,
     val operator: Token,
-    val right: Expression
-) : Expression
+    val right: Expr
+) : Expr
 
 /**
  * Grouping expression (parenthesized subexpression).
  * Allows explicit control over evaluation order. "(2 + 3) * 4" forces addition before multiplication.
  */
 data class Grouping(
-    val expression: Expression
-) : Expression
+    val expr: Expr
+) : Expr

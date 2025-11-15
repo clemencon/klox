@@ -25,14 +25,11 @@ class Parser(private val tokens: List<Token>) {
     private var currentPosition: Int = 0
 
     /**
-     * Parses tokens into an expression AST.
-     * Returns null if parsing fails, errors are reported via Lox.error().
+     * Parses tokens into an AST.
      */
-    fun parse(): Expression? {
-        return try {
-            expression()
-        } catch (_: ParseError) {
-            null
+    fun parse(): List<Stmt> = buildList {
+        while (!isAtEnd()) {
+            add(statement())
         }
     }
 
@@ -40,15 +37,32 @@ class Parser(private val tokens: List<Token>) {
      * Entry point for expression parsing.
      * Delegates to equality (lowest precedence). Exists for future expansion (e.g., comma operator).
      */
-    private fun expression(): Expression {
+    private fun expression(): Expr {
         return equality()
+    }
+
+    private fun statement(): Stmt = when {
+        match(PRINT) -> printStatement()
+        else -> expressionStatement()
+    }
+
+    private fun printStatement(): Stmt {
+        val value = expression()
+        consume(SEMICOLON, "Expect ';' after value.")
+        return Print(value)
+    }
+
+    private fun expressionStatement(): Stmt {
+        val expr = expression()
+        consume(SEMICOLON, "Expect ';' after expression.")
+        return Expression(expr)
     }
 
     /**
      * Parses equality operators (== and !=).
      * Builds left-associative tree by iteratively consuming operators and wrapping in Binary nodes.
      */
-    private fun equality(): Expression {
+    private fun equality(): Expr {
         var expression = comparison()
 
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
@@ -64,7 +78,7 @@ class Parser(private val tokens: List<Token>) {
      * Parses comparison operators (>, >=, <, <=).
      * Higher precedence than equality, so 'a == b > c' parses as 'a == (b > c)'.
      */
-    private fun comparison(): Expression {
+    private fun comparison(): Expr {
         var expression = term()
 
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
@@ -80,7 +94,7 @@ class Parser(private val tokens: List<Token>) {
      * Parses additive operators (+ and -).
      * Higher precedence than comparison.
      */
-    private fun term(): Expression {
+    private fun term(): Expr {
         var expression = factor()
 
         while (match(MINUS, PLUS)) {
@@ -96,7 +110,7 @@ class Parser(private val tokens: List<Token>) {
      * Parses multiplicative operators (* and /).
      * Higher precedence than addition, so 'a + b * c' parses as 'a + (b * c)'.
      */
-    private fun factor(): Expression {
+    private fun factor(): Expr {
         var expression = unary()
 
         while (match(SLASH, STAR)) {
@@ -112,7 +126,7 @@ class Parser(private val tokens: List<Token>) {
      * Parses unary operators (! and -).
      * Right-associative. Uses recursion to allow stacking (e.g., '!!true', '--5').
      */
-    private fun unary(): Expression {
+    private fun unary(): Expr {
         if (match(BANG, MINUS)) {
             val operator = previous()
             val right = unary()
@@ -126,7 +140,7 @@ class Parser(private val tokens: List<Token>) {
      * Parses primary expressions (literals and grouping).
      * Highest precedence level. Handles literals and parenthesized expressions.
      */
-    private fun primary(): Expression {
+    private fun primary(): Expr {
         if (match(FALSE)) return Literal(false)
         if (match(TRUE)) return Literal(true)
         if (match(NIL)) return Literal(null)
