@@ -114,17 +114,13 @@ private fun stringify(value: Any?) = when (value) {
 }
 
 /** Type-checks unary operand. Throws RuntimeError (with token location) instead of ClassCastException. */
-private fun requireNumberOperand(operator: Token, right: Any?): Double {
-    if (right !is Double) {
-        throw RuntimeError(operator, "Operand must be a number.")
-    }
-    return right
+private fun requireNumberOperand(operator: Token, right: Any?) = when {
+    right is Double -> right
+    else -> throw RuntimeError(operator, "Operand must be a number.")
 }
 
 /** Type-checks binary operands. Throws RuntimeError (with token location) instead of ClassCastException. */
-private fun requireNumberOperands(operator: Token, left: Any?, right: Any?): Pair<Double, Double> {
-    if (left !is Double || right !is Double) {
-        throw RuntimeError(operator, "Operands must be numbers.")
-    }
-    return left to right
+private fun requireNumberOperands(operator: Token, left: Any?, right: Any?) = when {
+    left is Double && right is Double -> left to right
+    else -> throw RuntimeError(operator, "Operands must be numbers.")
 }

@@ -23,16 +23,10 @@ class Parser(private val tokens: List<Token>) {
     private var currentPosition: Int = 0
 
     /** Parses a sequence of statements until EOF. */
-    fun parse(): List<Stmt> = buildList {
-        while (!isAtEnd()) {
-            add(statement())
-        }
-    }
+    fun parse(): List<Stmt> = buildList { while (!isAtEnd()) add(statement()) }
 
     /** Entry point for expression parsing. Delegates to the lowest precedence level. */
-    private fun expression(): Expr {
-        return equality()
-    }
+    private fun expression(): Expr = equality()
 
     /** Dispatches to the appropriate statement parser based on current token. */
     private fun statement(): Stmt = when {
@@ -118,20 +112,19 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Literals and parenthesized expressions (highest precedence). */
-    private fun primary(): Expr {
-        if (match(FALSE)) return Literal(false)
-        if (match(TRUE)) return Literal(true)
-        if (match(NIL)) return Literal(null)
+    private fun primary(): Expr = when {
+        match(FALSE) -> Literal(false)
+        match(TRUE) -> Literal(true)
+        match(NIL) -> Literal(null)
+        match(NUMBER, STRING) -> Literal(previous().literal)
 
-        if (match(NUMBER, STRING)) return Literal(previous().literal)
-
-        if (match(LEFT_PAREN)) {
+        match(LEFT_PAREN) -> {
             val expression = expression()
             consume(RIGHT_PAREN, "Expect ')' after expression.")
-            return Grouping(expression)
+            Grouping(expression)
         }
 
-        throw error(peek(), "Expect expression.")
+        else -> throw error(peek(), "Expect expression.")
     }
 
     /** Consumes current token if it matches any given type. Returns true if matched. */
@@ -147,16 +140,11 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Like match() but throws an error if token type doesn't match. */
-    private fun consume(tokenType: TokenType, message: String): Token {
-        if (check(tokenType)) return advance()
-        throw error(peek(), message)
-    }
+    private fun consume(tokenType: TokenType, message: String): Token =
+        if (check(tokenType)) advance() else throw error(peek(), message)
 
     /** Checks if current token matches type without consuming. Returns false at EOF. */
-    private fun check(tokenType: TokenType): Boolean {
-        if (isAtEnd()) return false
-        return peek().type == tokenType
-    }
+    private fun check(tokenType: TokenType): Boolean = if (isAtEnd()) false else peek().type == tokenType
 
     /** Consumes and returns current token. */
     private fun advance(): Token {
@@ -165,19 +153,13 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Checks if we've reached the EOF token. */
-    private fun isAtEnd(): Boolean {
-        return peek().type == EOF
-    }
+    private fun isAtEnd(): Boolean = peek().type == EOF
 
     /** Returns current token without consuming. */
-    private fun peek(): Token {
-        return tokens[currentPosition]
-    }
+    private fun peek(): Token = tokens[currentPosition]
 
     /** Returns most recently consumed token. */
-    private fun previous(): Token {
-        return tokens.get(currentPosition - 1)
-    }
+    private fun previous(): Token = tokens[currentPosition - 1]
 
     /** Reports error and returns ParseError to unwind the parser. */
     private fun error(token: Token, message: String): ParseError {

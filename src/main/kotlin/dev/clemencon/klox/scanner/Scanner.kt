@@ -121,16 +121,11 @@ class Scanner(private val sourceCode: String) {
     }
 
     /** Returns current character without consuming. Returns '\u0000' at EOF. */
-    private fun peek(): Char {
-        if (isAtEnd()) return '\u0000'
-        return sourceCode[currentPosition]
-    }
+    private fun peek(): Char = if (isAtEnd()) '\u0000' else sourceCode[currentPosition]
 
     /** Two-character lookahead for decimal points. Returns '\u0000' at EOF. */
-    private fun peekNext(): Char {
-        if (currentPosition >= sourceCode.lastIndex) return '\u0000'
-        return sourceCode[currentPosition + 1]
-    }
+    private fun peekNext(): Char =
+        if (currentPosition >= sourceCode.lastIndex) '\u0000' else sourceCode[currentPosition + 1]
 
     private fun isAtEnd() = currentPosition >= sourceCode.length
 }

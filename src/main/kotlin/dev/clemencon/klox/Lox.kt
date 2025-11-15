@@ -24,9 +24,7 @@ class Lox {
         var hadRuntimeError = false
 
         /** Reports scan errors without token context (unexpected characters, unterminated strings). */
-        fun error(line: Int, message: String) {
-            report(line, "", message)
-        }
+        fun error(line: Int, message: String) = report(line, "", message)
 
         /** Reports runtime errors with token location for context. */
         fun runtimeError(error: RuntimeError) {
@@ -41,12 +39,9 @@ class Lox {
         }
 
         /** Reports parse errors. Shows lexeme for context, except EOF uses 'at end'. */
-        fun error(token: Token, message: String) {
-            if (token.type == EOF) {
-                report(token.lineNumber, " at end", message)
-            } else {
-                report(token.lineNumber, " at '${token.lexeme}'", message)
-            }
+        fun error(token: Token, message: String) = when (token.type) {
+            EOF -> report(token.lineNumber, " at end", message)
+            else -> report(token.lineNumber, " at '${token.lexeme}'", message)
         }
     }
 
@@ -75,8 +70,6 @@ class Lox {
         val expression = parser.parse()
 
         // Stop if there was a syntax error.
-        if (hadError || expression == null) return
-
-        interpreter.interpret(expression)
+        if (!hadError) interpreter.interpret(expression)
     }
 }
