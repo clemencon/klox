@@ -9,14 +9,24 @@ import dev.clemencon.klox.scanner.TokenType.*
  * Recursive descent parser. Each grammar rule becomes a method.
  * Precedence is encoded by nesting: lower precedence rules call higher ones.
  *
- * Grammar (lowest to highest precedence):
- * expression → equality ;
- * equality   → comparison ( ( "!=" | "==" ) comparison )* ;
- * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
- * term       → factor ( ( "-" | "+" ) factor )* ;
- * factor     → unary ( ( "/" | "*" ) unary )* ;
- * unary      → ( "!" | "-" ) unary | primary ;
- * primary    → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+ * program        → declaration* EOF ;
+ *
+ * declaration    → varDecl
+ *                | statement ;
+ * varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+ *
+ * statement      → exprStmt | printStmt ;
+ *
+ * expression     → equality ;
+ * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+ * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+ * term           → factor ( ( "-" | "+" ) factor )* ;
+ * factor         → unary ( ( "/" | "*" ) unary )* ;
+ * unary          → ( "!" | "-" ) unary | primary ;
+ * primary        → "true" | "false" | "nil"
+ *                | NUMBER | STRING
+ *                | "(" expression ")"
+ *                | IDENTIFIER ;
  */
 class Parser(private val tokens: List<Token>) {
     /** Points to the next token to consume. */
