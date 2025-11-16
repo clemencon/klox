@@ -32,11 +32,23 @@ class Parser(private val tokens: List<Token>) {
     /** Points to the next token to consume. */
     private var currentPosition: Int = 0
 
-    /** Parses a sequence of statements until EOF. */
-    fun parse(): List<Stmt> = buildList { while (!isAtEnd()) add(statement()) }
+    /** Parses source into statements. Skips declarations that fail with parse errors. */
+    fun parse(): List<Stmt> = buildList {
+        while (!isAtEnd()) declaration()?.let { add(it) }
+    }
 
     /** Entry point for expression parsing. Delegates to the lowest precedence level. */
     private fun expression(): Expr = equality()
+
+    /** Parses variable declarations and statements. Returns null on error after synchronizing to next statement. */
+    private fun declaration(): Stmt? {
+        try {
+            return if (match(VAR)) varDeclaration() else statement()
+        } catch (error: ParseError) {
+            synchronize()
+            return null
+        }
+    }
 
     /** Dispatches to the appropriate statement parser based on current token. */
     private fun statement(): Stmt = when {
@@ -51,6 +63,14 @@ class Parser(private val tokens: List<Token>) {
         return Print(value)
     }
 
+    /** Parses 'var' declaration: var <name> = <expr>? ; */
+    private fun varDeclaration(): Stmt {
+        val name = consume(IDENTIFIER, "Expect variable name.")
+        val initializer = if (match(EQUAL)) expression() else null  // null allows "var x;" without an initializer.
+        consume(SEMICOLON, "Expect ';' after variable declaration.")
+        return Var(name, initializer)
+    }
+
     /** Parses expression statement: <expr> ; (evaluates expression and discards result). */
     private fun expressionStatement(): Stmt {
         val expr = expression()
@@ -58,7 +78,7 @@ class Parser(private val tokens: List<Token>) {
         return Expression(expr)
     }
 
-    /** Left-associative == and != operators. */
+    /** Left-associative == and != operators. Loop builds left-to-right: 'a == b == c' becomes '(a == b) == c'. */
     private fun equality(): Expr {
         var expression = comparison()
 
@@ -127,6 +147,7 @@ class Parser(private val tokens: List<Token>) {
         match(TRUE) -> Literal(true)
         match(NIL) -> Literal(null)
         match(NUMBER, STRING) -> Literal(previous().literal)
+        match(IDENTIFIER) -> Variable(previous())
 
         match(LEFT_PAREN) -> {
             val expression = expression()
