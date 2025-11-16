@@ -1,8 +1,4 @@
-package dev.clemencon.klox.interpreter
-
-import dev.clemencon.klox.parser.*
-
-// ju: Move to parser/expression/
+package dev.clemencon.klox.parser
 
 /** String representation for debugging: '1 + 2 * 3' → '(+ 1 (* 2 3))'. */
 fun Expr.toString() = when (this) {
