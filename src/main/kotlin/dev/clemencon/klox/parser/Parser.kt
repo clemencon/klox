@@ -212,11 +212,3 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 }
-
-/**
- * Sentinel exception for unwinding the parser on errors.
- * Error reporting happens via Lox.error() before throwing this.
- * Using an exception allows immediate exit from nested parsing methods
- * without wrapping return types in Result-style containers.
- */
-class ParseError : RuntimeException()
