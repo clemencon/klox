@@ -17,14 +17,9 @@ class Interpreter(private val environment: Environment = Environment()) {
 
     /** Executes statements using polymorphic dispatch. */
     private fun Stmt.execute() = when (this) {
-        is Expression -> expression.evaluate()
-        is Print -> println(stringify(expression.evaluate()))
-        is Var -> {
-            // Variables without initializers are set to nil.
-            val value = initializer?.evaluate()
-            environment.define(name.lexeme, value)
-            null
-        }
+        is Expression -> execute(this)
+        is Print -> execute(this)
+        is Var -> execute(this)
     }
 
     /** Evaluates expressions using polymorphic dispatch. */
@@ -34,6 +29,17 @@ class Interpreter(private val environment: Environment = Environment()) {
         is Literal -> evaluate(this)
         is Unary -> evaluate(this)
         is Variable -> evaluate(this)
+    }
+
+    /** Expression statement: evaluates for side effects (to be implemented), discards result. */
+    private fun execute(expression: Expression): Any? = expression.expression.evaluate()
+
+    private fun execute(print: Print) = println(stringify(print.expression.evaluate()))
+
+    /** Variable declaration. Uninitialized variables default to nil. */
+    private fun execute(variable: Var) {
+        val value = variable.initializer?.evaluate()
+        environment.define(variable.name.lexeme, value)
     }
 
     /** Binary operators. Type-checks operands to throw RuntimeError (with token location) instead of ClassCastException. */
@@ -94,7 +100,6 @@ class Interpreter(private val environment: Environment = Environment()) {
 
     private fun evaluate(literal: Literal): Any? = literal.value
 
-    /** Unary operators. */
     private fun evaluate(unary: Unary): Any {
         val right = unary.right.evaluate()
 
