@@ -6,7 +6,7 @@ import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.scanner.TokenType.*
 
 /** Tree-walk interpreter. Executes statements and catches runtime errors. */
-class Interpreter {
+class Interpreter(private val environment: Environment = Environment()) {
     fun interpret(statements: List<Stmt>) {
         try {
             statements.forEach { it.execute() }
@@ -14,89 +14,99 @@ class Interpreter {
             Lox.runtimeError(error)
         }
     }
-}
 
-/** Executes statements using polymorphic dispatch. */
-private fun Stmt.execute() = when (this) {
-    is Expression -> expression.evaluate()
-    is Print -> println(stringify(expression.evaluate()))
-}
-
-/** Evaluates expressions using polymorphic dispatch. */
-private fun Expr.evaluate(): Any? = when (this) {
-    is Binary -> evaluate(this)
-    is Grouping -> evaluate(this)
-    is Literal -> evaluate(this)
-    is Unary -> evaluate(this)
-}
-
-/** Binary operators. Type-checks operands to throw RuntimeError (with token location) instead of ClassCastException. */
-private fun evaluate(binary: Binary): Any {
-    val left = binary.left.evaluate()
-    val right = binary.right.evaluate()
-
-    return when (binary.operator.type) {
-        BANG_EQUAL -> left != right
-        EQUAL_EQUAL -> left == right
-        GREATER -> {
-            val (left, right) = requireNumberOperands(binary.operator, left, right)
-            left > right
+    /** Executes statements using polymorphic dispatch. */
+    private fun Stmt.execute() = when (this) {
+        is Expression -> expression.evaluate()
+        is Print -> println(stringify(expression.evaluate()))
+        is Var -> {
+            // Variables without initializers are set to nil.
+            val value = initializer?.evaluate()
+            environment.define(name.lexeme, value)
+            null
         }
-
-        GREATER_EQUAL -> {
-            val (left, right) = requireNumberOperands(binary.operator, left, right)
-            left >= right
-        }
-
-        LESS -> {
-            val (left, right) = requireNumberOperands(binary.operator, left, right)
-            left < right
-        }
-
-        LESS_EQUAL -> {
-            val (left, right) = requireNumberOperands(binary.operator, left, right)
-            left <= right
-        }
-
-        SLASH -> {
-            val (left, right) = requireNumberOperands(binary.operator, left, right)
-            left / right
-        }
-
-        STAR -> {
-            val (left, right) = requireNumberOperands(binary.operator, left, right)
-            left * right
-        }
-
-        MINUS -> {
-            val (left, right) = requireNumberOperands(binary.operator, left, right)
-            left - right
-        }
-
-        // PLUS supports both number addition and string concatenation.
-        PLUS -> when {
-            left is Double && right is Double -> left + right
-            left is String && right is String -> left + right
-            else -> throw RuntimeError(binary.operator, "Operands must be two numbers or two strings.")
-        }
-
-        else -> error("Unreachable: Unknown binary operator ${binary.operator.type}")
     }
-}
 
-private fun evaluate(grouping: Grouping): Any? = grouping.expr.evaluate()
-
-private fun evaluate(literal: Literal): Any? = literal.value
-
-/** Unary operators. */
-private fun evaluate(unary: Unary): Any {
-    val right = unary.right.evaluate()
-
-    return when (unary.operator.type) {
-        MINUS -> -requireNumberOperand(unary.operator, right)
-        BANG -> !isTruthy(right)
-        else -> error("Unreachable: Unknown unary operator ${unary.operator.type}")
+    /** Evaluates expressions using polymorphic dispatch. */
+    private fun Expr.evaluate(): Any? = when (this) {
+        is Binary -> evaluate(this)
+        is Grouping -> evaluate(this)
+        is Literal -> evaluate(this)
+        is Unary -> evaluate(this)
+        is Variable -> evaluate(this)
     }
+
+    /** Binary operators. Type-checks operands to throw RuntimeError (with token location) instead of ClassCastException. */
+    private fun evaluate(binary: Binary): Any {
+        val left = binary.left.evaluate()
+        val right = binary.right.evaluate()
+
+        return when (binary.operator.type) {
+            BANG_EQUAL -> left != right
+            EQUAL_EQUAL -> left == right
+            GREATER -> {
+                val (left, right) = requireNumberOperands(binary.operator, left, right)
+                left > right
+            }
+
+            GREATER_EQUAL -> {
+                val (left, right) = requireNumberOperands(binary.operator, left, right)
+                left >= right
+            }
+
+            LESS -> {
+                val (left, right) = requireNumberOperands(binary.operator, left, right)
+                left < right
+            }
+
+            LESS_EQUAL -> {
+                val (left, right) = requireNumberOperands(binary.operator, left, right)
+                left <= right
+            }
+
+            SLASH -> {
+                val (left, right) = requireNumberOperands(binary.operator, left, right)
+                left / right
+            }
+
+            STAR -> {
+                val (left, right) = requireNumberOperands(binary.operator, left, right)
+                left * right
+            }
+
+            MINUS -> {
+                val (left, right) = requireNumberOperands(binary.operator, left, right)
+                left - right
+            }
+
+            // PLUS supports both number addition and string concatenation.
+            PLUS -> when {
+                (left is Double && right is Double) -> left + right
+                (left is String && right is String) -> left + right
+                else -> throw RuntimeError(binary.operator, "Operands must be two numbers or two strings.")
+            }
+
+            else -> error("Unreachable: Unknown binary operator ${binary.operator.type}")
+        }
+    }
+
+    private fun evaluate(grouping: Grouping): Any? = grouping.expr.evaluate()
+
+    private fun evaluate(literal: Literal): Any? = literal.value
+
+    /** Unary operators. */
+    private fun evaluate(unary: Unary): Any {
+        val right = unary.right.evaluate()
+
+        return when (unary.operator.type) {
+            MINUS -> -requireNumberOperand(unary.operator, right)
+            BANG -> !isTruthy(right)
+            else -> error("Unreachable: Unknown unary operator ${unary.operator.type}")
+        }
+    }
+
+    /** Variable lookup. Throws RuntimeError if undefined. */
+    private fun evaluate(variable: Variable): Any? = environment.get(variable.name)
 }
 
 /** Lox truthiness: only false and nil are falsy, 0 and "" are truthy. */
