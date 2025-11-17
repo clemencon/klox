@@ -1,6 +1,5 @@
-package dev.clemencon.klox.parser
+package dev.clemencon.klox.interpreter
 
-import dev.clemencon.klox.interpreter.RuntimeError
 import dev.clemencon.klox.scanner.Token
 
 /** Stores variable bindings for a single scope. Supports nil values. */
