@@ -7,7 +7,7 @@ import dev.clemencon.klox.scanner.TokenType.*
 
 /** Tree-walk interpreter. Executes statements and catches runtime errors. */
 class Interpreter(private val environment: Environment = Environment()) {
-    fun interpret(statements: List<Stmt>) {
+    fun interpret(statements: List<Statement>) {
         try {
             statements.forEach { it.execute() }
         } catch (error: RuntimeError) {
@@ -16,19 +16,20 @@ class Interpreter(private val environment: Environment = Environment()) {
     }
 
     /** Executes statements using polymorphic dispatch. */
-    private fun Stmt.execute() = when (this) {
+    private fun Statement.execute() = when (this) {
         is ExpressionStatement -> execute(this)
         is PrintStatement -> execute(this)
         is VariableDeclaration -> execute(this)
     }
 
     /** Evaluates expressions using polymorphic dispatch. */
-    private fun Expr.evaluate(): Any? = when (this) {
+    private fun Expression.evaluate(): Any? = when (this) {
         is Binary -> evaluate(this)
         is Grouping -> evaluate(this)
         is Literal -> evaluate(this)
         is Unary -> evaluate(this)
         is Variable -> evaluate(this)
+        // is Assignment -> TODO()
     }
 
     /** Expression statement: evaluates for side effects (to be implemented), discards result. */
@@ -96,7 +97,7 @@ class Interpreter(private val environment: Environment = Environment()) {
         }
     }
 
-    private fun evaluate(grouping: Grouping): Any? = grouping.expr.evaluate()
+    private fun evaluate(grouping: Grouping): Any? = grouping.expression.evaluate()
 
     private fun evaluate(literal: Literal): Any? = literal.value
 

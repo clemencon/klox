@@ -6,13 +6,13 @@ import dev.clemencon.klox.scanner.Token
  * Statement AST.
  * Sealed interface enables exhaustive matching when adding operations without modifying these classes.
  */
-sealed interface Stmt
+sealed interface Statement
 
 /** Expression statement: evaluates expression and discards result. */
-data class ExpressionStatement(val expression: Expr) : Stmt
+data class ExpressionStatement(val expression: Expression) : Statement
 
 /** Print statement: evaluates expression and prints result. */
-data class PrintStatement(val expression: Expr) : Stmt
+data class PrintStatement(val expression: Expression) : Statement
 
 /** Variable declaration: binds identifier to optional initial value. */
-data class VariableDeclaration(val name: Token, val initializer: Expr?) : Stmt
+data class VariableDeclaration(val name: Token, val initializer: Expression?) : Statement

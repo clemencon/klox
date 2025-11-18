@@ -6,22 +6,22 @@ import dev.clemencon.klox.scanner.Token
  * Expression AST.
  * Sealed interface enables exhaustive matching when adding operations without modifying these classes.
  */
-sealed interface Expr
+sealed interface Expression
 
 /** Literal constants: numbers, strings, booleans, nil. */
-data class Literal(val value: Any?) : Expr
+data class Literal(val value: Any?) : Expression
 
 /** Unary operators: ! and -. Token provides operator type and line number for errors. */
-data class Unary(val operator: Token, val right: Expr) : Expr
+data class Unary(val operator: Token, val right: Expression) : Expression
 
 /** Binary operators: +, -, *, /, ==, !=, <, >, <=, >=. Tree structure encodes precedence. */
-data class Binary(val left: Expr, val operator: Token, val right: Expr) : Expr
+data class Binary(val left: Expression, val operator: Token, val right: Expression) : Expression
 
 /** Parenthesized expression. Overrides precedence: '(2 + 3) * 4' forces addition first. */
-data class Grouping(val expr: Expr) : Expr
+data class Grouping(val expression: Expression) : Expression
 
 /** Variable reference: reads value from identifier. */
-data class Variable(val name: Token) : Expr
+data class Variable(val name: Token) : Expression
 
 // ju: Continue: https://craftinginterpreters.com/statements-and-state.html#assignment-syntax
-data class Assignment(val name: Token, val value: Expr) : Expr
+data class Assignment(val name: Token, val value: Expression) : Expression

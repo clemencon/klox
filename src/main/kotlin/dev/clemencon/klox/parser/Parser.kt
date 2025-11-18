@@ -34,15 +34,15 @@ class Parser(private val tokens: List<Token>) {
     private var currentPosition: Int = 0
 
     /** Parses source into statements. Skips declarations that fail with parse errors. */
-    fun parse(): List<Stmt> = buildList {
+    fun parse(): List<Statement> = buildList {
         while (!isAtEnd()) declaration()?.let { add(it) }
     }
 
     /** Entry point for expression parsing. Delegates to the lowest precedence level. */
-    private fun expression(): Expr = equality()
+    private fun expression(): Expression = equality()
 
     /** Parses variable declarations and statements. Returns null on error after synchronizing to next statement. */
-    private fun declaration(): Stmt? {
+    private fun declaration(): Statement? {
         try {
             return if (match(VAR)) varDeclaration() else statement()
         } catch (error: ParseError) {
@@ -52,35 +52,35 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Dispatches to the appropriate statement parser based on current token. */
-    private fun statement(): Stmt = when {
+    private fun statement(): Statement = when {
         match(PRINT) -> printStatement()
         else -> expressionStatement()
     }
 
-    /** Parses 'print' statement: print <expr> ; */
-    private fun printStatement(): Stmt {
+    /** Parses 'print' statement: print <expression> ; */
+    private fun printStatement(): Statement {
         val value = expression()
         consume(SEMICOLON, "Expect ';' after value.")
         return PrintStatement(value)
     }
 
-    /** Parses 'var' declaration: var <name> = <expr>? ; */
-    private fun varDeclaration(): Stmt {
+    /** Parses 'var' declaration: var <name> = <expression>? ; */
+    private fun varDeclaration(): Statement {
         val name = consume(IDENTIFIER, "Expect variable name.")
         val initializer = if (match(EQUAL)) expression() else null  // null allows "var x;" without an initializer.
         consume(SEMICOLON, "Expect ';' after variable declaration.")
         return VariableDeclaration(name, initializer)
     }
 
-    /** Parses expression statement: <expr> ; (evaluates expression and discards result). */
-    private fun expressionStatement(): Stmt {
+    /** Parses expression statement: <expression> ; (evaluates expression and discards result). */
+    private fun expressionStatement(): Statement {
         val expr = expression()
         consume(SEMICOLON, "Expect ';' after expression.")
         return ExpressionStatement(expr)
     }
 
     /** Left-associative == and != operators. Loop builds left-to-right: 'a == b == c' becomes '(a == b) == c'. */
-    private fun equality(): Expr {
+    private fun equality(): Expression {
         var expression = comparison()
 
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
@@ -93,7 +93,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Comparison operators. Higher precedence than equality: 'a == b > c' → 'a == (b > c)'. */
-    private fun comparison(): Expr {
+    private fun comparison(): Expression {
         var expression = term()
 
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
@@ -106,7 +106,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Addition and subtraction. */
-    private fun term(): Expr {
+    private fun term(): Expression {
         var expression = factor()
 
         while (match(MINUS, PLUS)) {
@@ -119,7 +119,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Multiplication and division. Higher precedence than addition: 'a + b * c' → 'a + (b * c)'. */
-    private fun factor(): Expr {
+    private fun factor(): Expression {
         var expression = unary()
 
         while (match(SLASH, STAR)) {
@@ -132,7 +132,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Right-associative unary operators (! and -). Recursion allows stacking: '!!true'. */
-    private fun unary(): Expr {
+    private fun unary(): Expression {
         if (match(BANG, MINUS)) {
             val operator = previous()
             val right = unary()
@@ -143,7 +143,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Literals and parenthesized expressions (highest precedence). */
-    private fun primary(): Expr = when {
+    private fun primary(): Expression = when {
         match(FALSE) -> Literal(false)
         match(TRUE) -> Literal(true)
         match(NIL) -> Literal(null)
