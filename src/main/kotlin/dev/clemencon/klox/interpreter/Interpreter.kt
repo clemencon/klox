@@ -33,7 +33,9 @@ class Interpreter(private val environment: Environment = Environment()) {
     }
 
     /** Expression statement: evaluates for side effects (to be implemented), discards result. */
-    private fun execute(expressionStatement: ExpressionStatement): Any? = expressionStatement.expression.evaluate()
+    private fun execute(expressionStatement: ExpressionStatement) {
+        expressionStatement.expression.evaluate()
+    }
 
     private fun execute(printStatement: PrintStatement) = println(stringify(printStatement.expression.evaluate()))
 
