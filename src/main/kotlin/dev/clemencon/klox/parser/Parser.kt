@@ -44,7 +44,7 @@ class Parser(private val tokens: List<Token>) {
     /** Parses variable declarations and statements. Returns null on error after synchronizing to next statement. */
     private fun declaration(): Statement? {
         try {
-            return if (match(VAR)) varDeclaration() else statement()
+            return if (match(VAR)) variableDeclaration() else statement()
         } catch (_: ParseError) {
             synchronize()
             return null
@@ -65,7 +65,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Parses 'var' declaration: var <name> = <expression>? ; */
-    private fun varDeclaration(): Statement {
+    private fun variableDeclaration(): Statement {
         val name = consume(IDENTIFIER, "Expect variable name.")
         val initializer = if (match(EQUAL)) expression() else null  // null allows "var x;" without an initializer.
         consume(SEMICOLON, "Expect ';' after variable declaration.")
