@@ -6,7 +6,9 @@ import dev.clemencon.klox.scanner.Token
 import dev.clemencon.klox.scanner.TokenType.*
 
 /** Tree-walk interpreter. Executes statements and catches runtime errors. */
-class Interpreter(private val environment: Environment = Environment()) {
+class Interpreter() {
+    private val environment: Environment = Environment()
+
     fun interpret(statements: List<Statement>) {
         try {
             statements.forEach { it.execute() }
