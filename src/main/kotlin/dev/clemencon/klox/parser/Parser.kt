@@ -45,7 +45,7 @@ class Parser(private val tokens: List<Token>) {
     private fun declaration(): Statement? {
         try {
             return if (match(VAR)) varDeclaration() else statement()
-        } catch (error: ParseError) {
+        } catch (_: ParseError) {
             synchronize()
             return null
         }

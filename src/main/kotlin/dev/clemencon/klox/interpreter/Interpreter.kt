@@ -45,7 +45,7 @@ class Interpreter(private val environment: Environment = Environment()) {
         environment.define(variableDeclaration.name.lexeme, value)
     }
 
-    /** Binary operators. Type-checks operands to throw RuntimeError (with token location) instead of ClassCastException. */
+    /** Binary operators. Type-checks operands to throw RuntimeError (with token location). */
     private fun evaluate(binary: Binary): Any {
         val left = binary.left.evaluate()
         val right = binary.right.evaluate()
