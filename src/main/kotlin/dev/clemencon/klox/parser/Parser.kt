@@ -17,7 +17,8 @@ import dev.clemencon.klox.scanner.TokenType.*
  *
  * statement      → exprStmt | printStmt ;
  *
- * expression     → equality ;
+ * expression     → assignment ;
+ * assignment     → IDENTIFIER "=" assignment | equality ;
  * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term           → factor ( ( "-" | "+" ) factor )* ;
@@ -60,7 +61,7 @@ class Parser(private val tokens: List<Token>) {
     private fun printStatement(): Stmt {
         val value = expression()
         consume(SEMICOLON, "Expect ';' after value.")
-        return Print(value)
+        return PrintStatement(value)
     }
 
     /** Parses 'var' declaration: var <name> = <expr>? ; */
@@ -68,14 +69,14 @@ class Parser(private val tokens: List<Token>) {
         val name = consume(IDENTIFIER, "Expect variable name.")
         val initializer = if (match(EQUAL)) expression() else null  // null allows "var x;" without an initializer.
         consume(SEMICOLON, "Expect ';' after variable declaration.")
-        return Var(name, initializer)
+        return VariableDeclaration(name, initializer)
     }
 
     /** Parses expression statement: <expr> ; (evaluates expression and discards result). */
     private fun expressionStatement(): Stmt {
         val expr = expression()
         consume(SEMICOLON, "Expect ';' after expression.")
-        return Expression(expr)
+        return ExpressionStatement(expr)
     }
 
     /** Left-associative == and != operators. Loop builds left-to-right: 'a == b == c' becomes '(a == b) == c'. */

@@ -22,3 +22,6 @@ data class Grouping(val expr: Expr) : Expr
 
 /** Variable reference: reads value from identifier. */
 data class Variable(val name: Token) : Expr
+
+// ju: Continue: https://craftinginterpreters.com/statements-and-state.html#assignment-syntax
+data class Assignment(val name: Token, val value: Expr) : Expr

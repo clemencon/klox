@@ -9,10 +9,10 @@ import dev.clemencon.klox.scanner.Token
 sealed interface Stmt
 
 /** Expression statement: evaluates expression and discards result. */
-data class Expression(val expression: Expr) : Stmt
+data class ExpressionStatement(val expression: Expr) : Stmt
 
 /** Print statement: evaluates expression and prints result. */
-data class Print(val expression: Expr) : Stmt
+data class PrintStatement(val expression: Expr) : Stmt
 
 /** Variable declaration: binds identifier to optional initial value. */
-data class Var(val name: Token, val initializer: Expr?) : Stmt
+data class VariableDeclaration(val name: Token, val initializer: Expr?) : Stmt

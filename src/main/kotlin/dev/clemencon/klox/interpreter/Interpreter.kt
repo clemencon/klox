@@ -17,9 +17,9 @@ class Interpreter(private val environment: Environment = Environment()) {
 
     /** Executes statements using polymorphic dispatch. */
     private fun Stmt.execute() = when (this) {
-        is Expression -> execute(this)
-        is Print -> execute(this)
-        is Var -> execute(this)
+        is ExpressionStatement -> execute(this)
+        is PrintStatement -> execute(this)
+        is VariableDeclaration -> execute(this)
     }
 
     /** Evaluates expressions using polymorphic dispatch. */
@@ -32,14 +32,14 @@ class Interpreter(private val environment: Environment = Environment()) {
     }
 
     /** Expression statement: evaluates for side effects (to be implemented), discards result. */
-    private fun execute(expression: Expression): Any? = expression.expression.evaluate()
+    private fun execute(expressionStatement: ExpressionStatement): Any? = expressionStatement.expression.evaluate()
 
-    private fun execute(print: Print) = println(stringify(print.expression.evaluate()))
+    private fun execute(printStatement: PrintStatement) = println(stringify(printStatement.expression.evaluate()))
 
     /** Variable declaration. Uninitialized variables default to nil. */
-    private fun execute(variable: Var) {
-        val value = variable.initializer?.evaluate()
-        environment.define(variable.name.lexeme, value)
+    private fun execute(variableDeclaration: VariableDeclaration) {
+        val value = variableDeclaration.initializer?.evaluate()
+        environment.define(variableDeclaration.name.lexeme, value)
     }
 
     /** Binary operators. Type-checks operands to throw RuntimeError (with token location) instead of ClassCastException. */
