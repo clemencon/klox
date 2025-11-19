@@ -23,5 +23,5 @@ data class Grouping(val expression: Expression) : Expression
 /** Variable reference: reads value from identifier. */
 data class Variable(val name: Token) : Expression
 
-// ju: Continue: https://craftinginterpreters.com/statements-and-state.html#assignment-syntax
+/** Assignment to a variable identifier. Returns the value, enabling a = b = 5. */
 data class Assignment(val name: Token, val value: Expression) : Expression

@@ -38,8 +38,8 @@ class Parser(private val tokens: List<Token>) {
         while (!isAtEnd()) declaration()?.let { add(it) }
     }
 
-    /** Entry point for expression parsing. Delegates to the lowest precedence level. */
-    private fun expression(): Expression = equality()
+    /** Entry point for expression parsing. Delegates to assignment (lowest precedence). */
+    private fun expression(): Expression = assignment()
 
     /** Parses variable declarations and statements. Returns null on error after synchronizing to next statement. */
     private fun declaration(): Statement? {
@@ -77,6 +77,22 @@ class Parser(private val tokens: List<Token>) {
         val expr = expression()
         consume(SEMICOLON, "Expect ';' after expression.")
         return ExpressionStatement(expr)
+    }
+
+    /** Right-associative assignment to variable identifiers. Recursion enables a = b = 5. */
+    private fun assignment(): Expression {
+        // The left-hand side is parsed as a normal expression first,
+        // then checked for validity as an assignment target after the fact.
+        // This simplifies the parser by reusing existing expression rules,
+        // at the cost of a type check here to convert the r-value into an l-value representation.
+        val expression = equality()
+        if (!match(EQUAL)) return expression
+
+        val equals = previous()
+        val value = assignment()  // Right-associative: recurse for right side.
+        if (expression is Variable) return Assignment(expression.name, value)
+
+        throw error(equals, "Invalid assignment target.")
     }
 
     /** Left-associative == and != operators. Loop builds left-to-right: 'a == b == c' becomes '(a == b) == c'. */
