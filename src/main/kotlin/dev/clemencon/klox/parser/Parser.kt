@@ -88,7 +88,7 @@ class Parser(private val tokens: List<Token>) {
         val expression = equality()
         if (!match(EQUAL)) return expression
 
-        val equals = previous()
+        val equals = previous() // Capture = before assignment() moves previous.
         val value = assignment()  // Right-associative: recurse for right side.
         if (expression is Variable) return Assignment(expression.name, value)
 

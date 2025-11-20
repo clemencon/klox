@@ -7,6 +7,7 @@ import dev.clemencon.klox.scanner.TokenType.*
 
 /** Tree-walk interpreter. Executes statements and catches runtime errors. */
 class Interpreter() {
+    /** Stores all variables in a single global scope. */
     private val environment: Environment = Environment()
 
     fun interpret(statements: List<Statement>) {
@@ -31,10 +32,10 @@ class Interpreter() {
         is Literal -> evaluate(this)
         is Unary -> evaluate(this)
         is Variable -> evaluate(this)
-        // is Assignment -> TODO()
+        is Assignment -> evaluate(this)
     }
 
-    /** Expression statement: evaluates for side effects (to be implemented), discards result. */
+    /** Expression statement: evaluates for side effects, discards result. */
     private fun execute(expressionStatement: ExpressionStatement) {
         expressionStatement.expression.evaluate()
     }
@@ -117,6 +118,13 @@ class Interpreter() {
 
     /** Variable lookup. Throws RuntimeError if undefined. */
     private fun evaluate(variable: Variable): Any? = environment.get(variable.name)
+
+    /** Assignment: evaluates value, assigns to variable, returns the value (enables a = b = 5). */
+    private fun evaluate(assignment: Assignment): Any? {
+        val value = assignment.value.evaluate()
+        environment.assign(assignment.name, value)
+        return value
+    }
 }
 
 /** Lox truthiness: only false and nil are falsy, 0 and "" are truthy. */

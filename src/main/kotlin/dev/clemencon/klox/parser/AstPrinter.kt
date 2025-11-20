@@ -6,7 +6,8 @@ fun Expression.toString() = when (this) {
     is Grouping -> parenthesize("group", this.expression)
     is Literal -> if (this.value == null) "nil" else this.value.toString()
     is Unary -> parenthesize(this.operator.lexeme, this.right)
-    is Variable -> TODO()
+    is Variable -> this.name.lexeme
+    is Assignment -> parenthesize("= ${this.name.lexeme}", this.value)
 }
 
 /** Formats as: (operator expr1 expr2 ...) */
