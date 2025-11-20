@@ -41,7 +41,7 @@ class Interpreter() {
 
     private fun execute(printStatement: PrintStatement) = println(stringify(printStatement.expression.evaluate()))
 
-    /** Variable declaration. Uninitialized variables default to nil. */
+    /** Variable declaration and initialization. Uninitialized variables default to nil. */
     private fun execute(variableDeclaration: VariableDeclaration) {
         val value = variableDeclaration.initializer?.evaluate()
         environment.define(variableDeclaration.name.lexeme, value)
