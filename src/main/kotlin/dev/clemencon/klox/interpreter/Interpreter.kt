@@ -7,8 +7,7 @@ import dev.clemencon.klox.scanner.TokenType.*
 
 /** Tree-walk interpreter. Executes statements and catches runtime errors. */
 class Interpreter() {
-    /** Stores all variables in a single global scope. */
-    private val environment: Environment = Environment()
+    private var environment: Environment = Environment()
 
     fun interpret(statements: List<Statement>) {
         try {
@@ -23,6 +22,7 @@ class Interpreter() {
         is ExpressionStatement -> execute(this)
         is PrintStatement -> execute(this)
         is VariableDeclaration -> execute(this)
+        is BlockStatement -> execute(this, Environment(enclosing = environment)) // Creates a child scope.
     }
 
     /** Evaluates expressions using polymorphic dispatch. */
@@ -46,6 +46,17 @@ class Interpreter() {
     private fun execute(variableDeclaration: VariableDeclaration) {
         val value = variableDeclaration.initializer?.evaluate()
         environment.define(variableDeclaration.name.lexeme, value)
+    }
+
+    /** Executes block in new scope. Saves current environment, switches to block's, restores on exit. */
+    private fun execute(blockStatement: BlockStatement, environment: Environment) {
+        val previous = this.environment
+        try {
+            this.environment = environment
+            blockStatement.statements.forEach { it.execute() }
+        } finally {
+            this.environment = previous
+        }
     }
 
     /** Binary operators. Type-checks operands to throw RuntimeError (with token location). */

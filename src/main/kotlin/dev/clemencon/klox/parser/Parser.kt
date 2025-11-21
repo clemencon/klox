@@ -15,7 +15,11 @@ import dev.clemencon.klox.scanner.TokenType.*
  *                | statement ;
  * varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
- * statement      → exprStmt | printStmt ;
+ * statement      → exprStmt
+ *                | printStmt
+ *                | block ;
+ *
+ * block          →  "{" declaration* "}" ;
  *
  * expression     → assignment ;
  * assignment     → IDENTIFIER "=" assignment | equality ;
@@ -54,6 +58,7 @@ class Parser(private val tokens: List<Token>) {
     /** Dispatches to the appropriate statement parser based on current token. */
     private fun statement(): Statement = when {
         match(PRINT) -> printStatement()
+        match(LEFT_BRACE) -> BlockStatement(blockStatement())
         else -> expressionStatement()
     }
 
@@ -77,6 +82,16 @@ class Parser(private val tokens: List<Token>) {
         val expr = expression()
         consume(SEMICOLON, "Expect ';' after expression.")
         return ExpressionStatement(expr)
+    }
+
+    private fun blockStatement(): List<Statement> {
+        val statements = buildList {
+            while (!check(RIGHT_BRACE) && !isAtEnd()) {
+                declaration()?.let { add(it) }
+            }
+        }
+        consume(RIGHT_BRACE, "Expect '}' after block.")
+        return statements
     }
 
     /** Right-associative assignment to variable identifiers. Recursion enables a = b = 5. */

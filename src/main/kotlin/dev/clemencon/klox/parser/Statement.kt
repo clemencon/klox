@@ -8,11 +8,14 @@ import dev.clemencon.klox.scanner.Token
  */
 sealed interface Statement
 
-/** Expression statement: evaluates expression and discards result. */
+/** Evaluates expression and discards result. */
 data class ExpressionStatement(val expression: Expression) : Statement
 
-/** Print statement: evaluates expression and prints result. */
+/** Evaluates expression and prints result. */
 data class PrintStatement(val expression: Expression) : Statement
 
-/** Variable declaration: binds identifier to optional initial value. */
+/** Binds identifier to optional initial value. */
 data class VariableDeclaration(val name: Token, val initializer: Expression?) : Statement
+
+/** Series of statements or declarations. */
+data class BlockStatement(val statements: List<Statement>) : Statement
