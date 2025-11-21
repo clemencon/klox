@@ -16,8 +16,12 @@ import dev.clemencon.klox.scanner.TokenType.*
  * varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
  * statement      → exprStmt
+ *                | ifStmt
  *                | printStmt
  *                | block ;
+ *
+ * ifStmt         → "if" "(" expression ")" statement
+ *                ( "else" statement )? ;
  *
  * block          →  "{" declaration* "}" ;
  *
@@ -57,9 +61,21 @@ class Parser(private val tokens: List<Token>) {
 
     /** Dispatches to the appropriate statement parser based on current token. */
     private fun statement(): Statement = when {
+        match(IF) -> ifStatement()
         match(PRINT) -> printStatement()
         match(LEFT_BRACE) -> BlockStatement(blockStatement())
         else -> expressionStatement()
+    }
+
+    private fun ifStatement(): Statement {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expect ')' after if condition.")
+
+        val thenBranch = statement()
+        val elseBranch = if (match(ELSE)) statement() else null
+
+        return IfStatement(condition, thenBranch, elseBranch)
     }
 
     /** Parses 'print' statement: print <expression> ; */

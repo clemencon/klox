@@ -19,3 +19,5 @@ data class VariableDeclaration(val name: Token, val initializer: Expression?) : 
 
 /** Series of statements or declarations. */
 data class BlockStatement(val statements: List<Statement>) : Statement
+
+data class IfStatement(val condition: Expression, val thenBranch: Statement, val elseBranch: Statement?) : Statement

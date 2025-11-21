@@ -20,6 +20,7 @@ class Interpreter() {
     /** Executes statements using polymorphic dispatch. */
     private fun Statement.execute() = when (this) {
         is ExpressionStatement -> execute(this)
+        is IfStatement -> execute(this)
         is PrintStatement -> execute(this)
         is VariableDeclaration -> execute(this)
         is BlockStatement -> execute(this, Environment(enclosing = environment)) // Creates a child scope.
@@ -38,6 +39,13 @@ class Interpreter() {
     /** Expression statement: evaluates for side effects, discards result. */
     private fun execute(expressionStatement: ExpressionStatement) {
         expressionStatement.expression.evaluate()
+    }
+
+    private fun execute(ifStatement: IfStatement) {
+        when (isTruthy(ifStatement.condition.evaluate())) {
+            true -> ifStatement.thenBranch.execute()
+            false -> ifStatement.elseBranch?.execute()
+        }
     }
 
     private fun execute(printStatement: PrintStatement) = println(stringify(printStatement.expression.evaluate()))
