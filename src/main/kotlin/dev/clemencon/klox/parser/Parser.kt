@@ -16,12 +16,20 @@ import dev.clemencon.klox.scanner.TokenType.*
  * varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
  * statement      → exprStmt
+ *                | forStmt
  *                | ifStmt
  *                | printStmt
+ *                | whileStmt
  *                | block ;
+ *
+ * forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
+ *                   expression? ";"
+ *                   expression? ")" statement ;
  *
  * ifStmt         → "if" "(" expression ")" statement
  *                ( "else" statement )? ;
+ *
+ * whileStmt      →  "while" "(" expression ")" statement ;
  *
  * block          →  "{" declaration* "}" ;
  *
@@ -62,10 +70,20 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
+    private fun whileStatement(): WhileStatement {
+        consume(LEFT_PAREN, "Expect '(' after 'while'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expect ')' after condition.")
+        val body = statement()
+
+        return WhileStatement(condition, body)
+    }
+
     /** Dispatches to the appropriate statement parser based on current token. */
     private fun statement(): Statement = when {
         match(IF) -> ifStatement()
         match(PRINT) -> printStatement()
+        match(WHILE) -> whileStatement()
         match(LEFT_BRACE) -> BlockStatement(blockStatement())
         else -> expressionStatement()
     }

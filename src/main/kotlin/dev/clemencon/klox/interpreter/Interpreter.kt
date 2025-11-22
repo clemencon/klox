@@ -23,6 +23,7 @@ class Interpreter() {
         is IfStatement -> execute(this)
         is PrintStatement -> execute(this)
         is VariableDeclaration -> execute(this)
+        is WhileStatement -> execute(this)
         is BlockStatement -> execute(this, Environment(enclosing = environment)) // Creates a child scope.
     }
 
@@ -55,6 +56,12 @@ class Interpreter() {
     private fun execute(variableDeclaration: VariableDeclaration) {
         val value = variableDeclaration.initializer?.evaluate()
         environment.define(variableDeclaration.name.lexeme, value)
+    }
+
+    private fun execute(whileStatement: WhileStatement) {
+        while (isTruthy(whileStatement.condition.evaluate())) {
+            whileStatement.body.execute()
+        }
     }
 
     /** Executes block in new scope. Saves current environment, switches to block's, restores on exit. */

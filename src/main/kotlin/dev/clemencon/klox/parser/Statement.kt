@@ -17,6 +17,8 @@ data class PrintStatement(val expression: Expression) : Statement
 /** Binds identifier to optional initial value. */
 data class VariableDeclaration(val name: Token, val initializer: Expression?) : Statement
 
+data class WhileStatement(val condition: Expression, val body: Statement) : Statement
+
 /** Series of statements or declarations. */
 data class BlockStatement(val statements: List<Statement>) : Statement
 
