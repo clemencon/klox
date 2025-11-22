@@ -8,6 +8,7 @@ fun Expression.toString() = when (this) {
     is Unary -> parenthesize(this.operator.lexeme, this.right)
     is Variable -> this.name.lexeme
     is Assignment -> parenthesize("= ${this.name.lexeme}", this.value)
+    is Logical -> parenthesize(this.operator.lexeme, this.left, this.right)
 }
 
 /** Formats as: (operator expr1 expr2 ...) */

@@ -26,7 +26,10 @@ import dev.clemencon.klox.scanner.TokenType.*
  * block          →  "{" declaration* "}" ;
  *
  * expression     → assignment ;
- * assignment     → IDENTIFIER "=" assignment | equality ;
+ * assignment     → IDENTIFIER "=" assignment
+ *                | logic_or ;
+ * logic_or       → logic_and ( "or" logic_and )* ;
+ * logic_and      → equality ( "and" equality )* ;
  * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term           → factor ( ( "-" | "+" ) factor )* ;
@@ -116,7 +119,7 @@ class Parser(private val tokens: List<Token>) {
         // then checked for validity as an assignment target after the fact.
         // This simplifies the parser by reusing existing expression rules,
         // at the cost of a type check here to convert the r-value into an l-value representation.
-        val expression = equality()
+        val expression = or()
         if (!match(EQUAL)) return expression
 
         val equals = previous() // Capture = before assignment() moves previous.
@@ -124,6 +127,30 @@ class Parser(private val tokens: List<Token>) {
         if (expression is Variable) return Assignment(expression.name, value)
 
         throw error(equals, "Invalid assignment target.")
+    }
+
+    private fun or(): Expression {
+        var expression = and()
+
+        while (match(OR)) {
+            val operator = previous()
+            val right = and()
+            expression = Logical(expression, operator, right)
+        }
+
+        return expression
+    }
+
+    private fun and(): Expression {
+        var expression = equality()
+
+        while (match(AND)) {
+            val operator = previous()
+            val right = equality()
+            expression = Logical(expression, operator, right)
+        }
+
+        return expression
     }
 
     /** Left-associative == and != operators. Loop builds left-to-right: 'a == b == c' becomes '(a == b) == c'. */

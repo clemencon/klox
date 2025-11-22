@@ -34,6 +34,7 @@ class Interpreter() {
         is Unary -> evaluate(this)
         is Variable -> evaluate(this)
         is Assignment -> evaluate(this)
+        is Logical -> evaluate(this)
     }
 
     /** Expression statement: evaluates for side effects, discards result. */
@@ -124,6 +125,16 @@ class Interpreter() {
     private fun evaluate(grouping: Grouping): Any? = grouping.expression.evaluate()
 
     private fun evaluate(literal: Literal): Any? = literal.value
+
+    private fun evaluate(logical: Logical): Any? {
+        val left = logical.left.evaluate()
+
+        return when (logical.operator.type) {
+            OR -> if (isTruthy(left)) left else logical.right.evaluate()
+            AND -> if (!isTruthy(left)) left else logical.right.evaluate()
+            else -> error("Unreachable: Unknown logical operator ${logical.operator.type}")
+        }
+    }
 
     private fun evaluate(unary: Unary): Any {
         val right = unary.right.evaluate()
