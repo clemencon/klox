@@ -17,7 +17,6 @@ class Interpreter() {
         }
     }
 
-    /** Executes statements using polymorphic dispatch. */
     private fun Statement.execute() = when (this) {
         is ExpressionStatement -> execute(this)
         is IfStatement -> execute(this)

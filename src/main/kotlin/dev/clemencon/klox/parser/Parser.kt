@@ -70,6 +70,7 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
+    /** Parses 'while' statement: while ( <condition> ) <body>. */
     private fun whileStatement(): WhileStatement {
         consume(LEFT_PAREN, "Expect '(' after 'while'.")
         val condition = expression()
@@ -81,6 +82,7 @@ class Parser(private val tokens: List<Token>) {
 
     /** Dispatches to the appropriate statement parser based on current token. */
     private fun statement(): Statement = when {
+        match(FOR) -> forStatement()
         match(IF) -> ifStatement()
         match(PRINT) -> printStatement()
         match(WHILE) -> whileStatement()
@@ -88,6 +90,42 @@ class Parser(private val tokens: List<Token>) {
         else -> expressionStatement()
     }
 
+    /** Desugars 'for' into while + blocks. No dedicated AST node needed. */
+    private fun forStatement(): Statement {
+        consume(LEFT_PAREN, "Expect '(' after 'for'.")
+
+        val initializer = when {
+            match(SEMICOLON) -> null // The initializer was omitted.
+            match(VAR) -> variableDeclaration()
+            else -> expressionStatement()
+        }
+
+        var condition: Expression? = if (!check(SEMICOLON)) expression() else null
+        consume(SEMICOLON, "Expect ';' after loop condition.")
+
+        val increment: Expression? = if (!check(RIGHT_PAREN)) expression() else null
+        consume(RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        var body = statement()
+
+        // Build equivalent while loop from the inside out: for (var i = 0; i < 10; i = i + 1) print i;
+        // becomes: { var i = 0; while (i < 10) { print i; i = i + 1; } }
+
+        if (increment != null) {
+            body = BlockStatement(body, ExpressionStatement(increment))
+        }
+
+        if (condition == null) condition = Literal(true) // Omitted condition → infinite loop.
+        body = WhileStatement(condition, body)
+
+        if (initializer != null) {
+            body = BlockStatement(initializer, body) // Outer block scopes the loop variable.
+        }
+
+        return body
+    }
+
+    /** Parses 'if' statement with optional 'else' branch. */
     private fun ifStatement(): Statement {
         consume(LEFT_PAREN, "Expect '(' after 'if'.")
         val condition = expression()
@@ -252,14 +290,13 @@ class Parser(private val tokens: List<Token>) {
     }
 
     /** Consumes current token if it matches any given type. Returns true if matched. */
-    private fun match(vararg tokenType: TokenType): Boolean {
-        tokenType.forEach {
+    private fun match(vararg tokenTypes: TokenType): Boolean {
+        tokenTypes.forEach {
             if (check(it)) {
                 advance()
                 return true
             }
         }
-
         return false
     }
 

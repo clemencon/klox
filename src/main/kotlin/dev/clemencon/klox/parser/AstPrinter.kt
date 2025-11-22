@@ -12,8 +12,8 @@ fun Expression.toString() = when (this) {
 }
 
 /** Formats as: (operator expr1 expr2 ...) */
-private fun parenthesize(name: String, vararg expression: Expression): String = buildString {
+private fun parenthesize(name: String, vararg expressions: Expression): String = buildString {
     append("($name")
-    expression.forEach { append(" $it") }
+    expressions.forEach { append(" $it") }
     append(")")
 }

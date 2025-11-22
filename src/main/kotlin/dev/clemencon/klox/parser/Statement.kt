@@ -20,6 +20,8 @@ data class VariableDeclaration(val name: Token, val initializer: Expression?) : 
 data class WhileStatement(val condition: Expression, val body: Statement) : Statement
 
 /** Series of statements or declarations. */
-data class BlockStatement(val statements: List<Statement>) : Statement
+data class BlockStatement(val statements: List<Statement>) : Statement {
+    constructor(vararg statements: Statement) : this(statements.toList())
+}
 
 data class IfStatement(val condition: Expression, val thenBranch: Statement, val elseBranch: Statement?) : Statement
