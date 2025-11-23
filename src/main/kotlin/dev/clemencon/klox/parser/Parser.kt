@@ -100,29 +100,20 @@ class Parser(private val tokens: List<Token>) {
             else -> expressionStatement()
         }
 
-        var condition: Expression? = if (!check(SEMICOLON)) expression() else null
+        val condition = if (!check(SEMICOLON)) expression() else Literal(true)
         consume(SEMICOLON, "Expect ';' after loop condition.")
 
-        val increment: Expression? = if (!check(RIGHT_PAREN)) expression() else null
+        val increment = if (!check(RIGHT_PAREN)) expression() else null
         consume(RIGHT_PAREN, "Expect ')' after for clauses.")
 
-        var body = statement()
+        val body = statement()
 
         // Build equivalent while loop from the inside out: for (var i = 0; i < 10; i = i + 1) print i;
         // becomes: { var i = 0; while (i < 10) { print i; i = i + 1; } }
-
-        if (increment != null) {
-            body = BlockStatement(body, ExpressionStatement(increment))
-        }
-
-        if (condition == null) condition = Literal(true) // Omitted condition → infinite loop.
-        body = WhileStatement(condition, body)
-
-        if (initializer != null) {
-            body = BlockStatement(initializer, body) // Outer block scopes the loop variable.
-        }
-
         return body
+            .let { if (increment == null) it else BlockStatement(it, ExpressionStatement(increment)) }
+            .let { WhileStatement(condition, it) }
+            .let { if (initializer == null) it else BlockStatement(initializer, it) }
     }
 
     /** Parses 'if' statement with optional 'else' branch. */
