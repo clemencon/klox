@@ -19,6 +19,8 @@ data class Logical(val left: Expression, val operator: Token, val right: Express
 /** Binary operators: +, -, *, /, ==, !=, <, >, <=, >=. Tree structure encodes precedence. */
 data class Binary(val left: Expression, val operator: Token, val right: Expression) : Expression
 
+data class Call(val callee: Expression, val closingParen: Token, val arguments: List<Expression>) : Expression
+
 /** Parenthesized expression. Overrides precedence: '(2 + 3) * 4' forces addition first. */
 data class Grouping(val expression: Expression) : Expression
 

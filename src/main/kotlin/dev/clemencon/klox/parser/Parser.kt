@@ -221,7 +221,35 @@ class Parser(private val tokens: List<Token>) {
             return Unary(operator, right)
         }
 
-        return primary()
+        return call()
+    }
+
+    private fun call(): Expression {
+        var expression = primary() // The "left operand" of the call.
+
+        // While true will make sense when object properties are handled.
+        while (true) {
+            if (match(LEFT_PAREN)) {
+                // Parse the expression using the previously parsed expression as the callee.
+                expression = finishCall(expression)
+            } else break
+        }
+
+        return expression
+    }
+
+    private fun finishCall(callee: Expression): Expression {
+        val arguments = if (check(RIGHT_PAREN)) emptyList() else {
+            buildList {
+                do {
+                    if (size >= 255) error(peek(), "Can't have more than 255 arguments.")
+                    add(expression())
+                } while (match(COMMA))
+            }
+        }
+        val rightParen = consume(RIGHT_PAREN, "Expect ')' after arguments.")
+
+        return Call(callee, rightParen, arguments)
     }
 
     /** Literals and parenthesized expressions (highest precedence). */
