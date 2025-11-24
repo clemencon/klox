@@ -8,45 +8,6 @@ import dev.clemencon.klox.scanner.TokenType.*
 /**
  * Recursive descent parser. Each grammar rule becomes a method.
  * Precedence is encoded by nesting: lower precedence rules call higher ones.
- *
- * program        → declaration* EOF ;
- *
- * declaration    → varDecl
- *                | statement ;
- * varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
- *
- * statement      → exprStmt
- *                | forStmt
- *                | ifStmt
- *                | printStmt
- *                | whileStmt
- *                | block ;
- *
- * forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
- *                   expression? ";"
- *                   expression? ")" statement ;
- *
- * ifStmt         → "if" "(" expression ")" statement
- *                ( "else" statement )? ;
- *
- * whileStmt      →  "while" "(" expression ")" statement ;
- *
- * block          →  "{" declaration* "}" ;
- *
- * expression     → assignment ;
- * assignment     → IDENTIFIER "=" assignment
- *                | logic_or ;
- * logic_or       → logic_and ( "or" logic_and )* ;
- * logic_and      → equality ( "and" equality )* ;
- * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
- * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
- * term           → factor ( ( "-" | "+" ) factor )* ;
- * factor         → unary ( ( "/" | "*" ) unary )* ;
- * unary          → ( "!" | "-" ) unary | primary ;
- * primary        → "true" | "false" | "nil"
- *                | NUMBER | STRING
- *                | "(" expression ")"
- *                | IDENTIFIER ;
  */
 class Parser(private val tokens: List<Token>) {
     /** Points to the next token to consume. */
