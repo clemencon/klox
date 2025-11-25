@@ -29,6 +29,7 @@ class Interpreter() {
     /** Evaluates expressions using polymorphic dispatch. */
     private fun Expression.evaluate(): Any? = when (this) {
         is Binary -> evaluate(this)
+        is Call -> evaluate(this)
         is Grouping -> evaluate(this)
         is Literal -> evaluate(this)
         is Unary -> evaluate(this)
@@ -126,6 +127,20 @@ class Interpreter() {
 
             else -> error("Unreachable: Unknown binary operator ${binary.operator.type}")
         }
+    }
+
+    private fun evaluate(call: Call): Any? {
+        val callee = call.callee.evaluate()
+        val arguments = call.arguments.map { it.evaluate() }
+
+        if (callee !is LoxCallable) {
+            throw RuntimeError(call.closingParen, "Can only call functions and classes.")
+        }
+        if (arguments.size != callee.arity) {
+            throw RuntimeError(call.closingParen, "Expected ${callee.arity} arguments but got ${arguments.size}.")
+        }
+
+        return callee.call(this, arguments)
     }
 
     private fun evaluate(grouping: Grouping): Any? = grouping.expression.evaluate()
