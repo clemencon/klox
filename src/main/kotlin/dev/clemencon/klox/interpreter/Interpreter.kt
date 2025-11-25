@@ -7,7 +7,12 @@ import dev.clemencon.klox.scanner.TokenType.*
 
 /** Tree-walk interpreter. Executes statements and catches runtime errors. */
 class Interpreter() {
-    private var environment: Environment = Environment()
+    val globals = Environment()
+    private var environment: Environment = globals
+
+    init {
+        globals.define("clock", NativeFunctions.clock)
+    }
 
     fun interpret(statements: List<Statement>) {
         try {
