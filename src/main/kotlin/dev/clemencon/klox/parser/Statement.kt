@@ -11,6 +11,8 @@ sealed interface Statement
 /** Evaluates expression and discards result. */
 data class ExpressionStatement(val expression: Expression) : Statement
 
+data class FunctionStatement(val name: Token, val params: List<Token>, val body: List<Statement>)
+
 /** Evaluates expression and prints result. */
 data class PrintStatement(val expression: Expression) : Statement
 
