@@ -24,7 +24,11 @@ class Parser(private val tokens: List<Token>) {
     /** Parses variable declarations and statements. Returns null on error after synchronizing to next statement. */
     private fun declaration(): Statement? {
         try {
-            return if (match(VAR)) variableDeclaration() else statement()
+            return when {
+                match(FUN) -> function("function")
+                match(VAR) -> variableDeclaration()
+                else -> statement()
+            }
         } catch (_: ParseError) {
             synchronize()
             return null
@@ -109,6 +113,24 @@ class Parser(private val tokens: List<Token>) {
         val expr = expression()
         consume(SEMICOLON, "Expect ';' after expression.")
         return ExpressionStatement(expr)
+    }
+
+    private fun function(kind: String): FunctionStatement {
+        val name = consume(IDENTIFIER, "Expect $kind name.")
+
+        consume(LEFT_PAREN, "Expect '(' after $kind name.")
+        val parameters = if (check(RIGHT_PAREN)) emptyList() else buildList {
+            do {
+                if (size >= 255) error(peek(), "Can't have more than 255 parameters.")
+                add(consume(IDENTIFIER, "Expect parameter name."))
+            } while (match(COMMA))
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters.")
+
+        consume(LEFT_BRACE, "Expect '{' before $kind body.")
+        val body = blockStatement()
+
+        return FunctionStatement(name, parameters, body)
     }
 
     private fun blockStatement(): List<Statement> {
@@ -239,13 +261,11 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun finishCall(callee: Expression): Expression {
-        val arguments = if (check(RIGHT_PAREN)) emptyList() else {
-            buildList {
-                do {
-                    if (size >= 255) error(peek(), "Can't have more than 255 arguments.")
-                    add(expression())
-                } while (match(COMMA))
-            }
+        val arguments = if (check(RIGHT_PAREN)) emptyList() else buildList {
+            do {
+                if (size >= 255) error(peek(), "Can't have more than 255 arguments.")
+                add(expression())
+            } while (match(COMMA))
         }
         val rightParen = consume(RIGHT_PAREN, "Expect ')' after arguments.")
 

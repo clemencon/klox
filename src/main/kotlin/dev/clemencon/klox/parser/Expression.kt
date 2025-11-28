@@ -14,11 +14,13 @@ data class Literal(val value: Any?) : Expression
 /** Unary operators: ! and -. Token provides operator type and line number for errors. */
 data class Unary(val operator: Token, val right: Expression) : Expression
 
+/** Logical operators (and/or). Short-circuits: 'and' stops at first falsy, 'or' stops at first truthy. */
 data class Logical(val left: Expression, val operator: Token, val right: Expression) : Expression
 
 /** Binary operators: +, -, *, /, ==, !=, <, >, <=, >=. Tree structure encodes precedence. */
 data class Binary(val left: Expression, val operator: Token, val right: Expression) : Expression
 
+/** Function call. Closing paren provides error location for arity mismatches. */
 data class Call(val callee: Expression, val closingParen: Token, val arguments: List<Expression>) : Expression
 
 /** Parenthesized expression. Overrides precedence: '(2 + 3) * 4' forces addition first. */

@@ -1,6 +1,9 @@
 package dev.clemencon.klox.interpreter
 
+/** Native functions available in global scope. */
 object NativeFunctions {
+
+    /** Returns Unix time in seconds since epoch. */
     val clock = object : LoxCallable {
         override val arity = 0
 
