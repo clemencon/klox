@@ -24,6 +24,7 @@ class Interpreter() {
 
     private fun Statement.execute() = when (this) {
         is ExpressionStatement -> execute(this)
+        is FunctionStatement -> execute(this)
         is IfStatement -> execute(this)
         is PrintStatement -> execute(this)
         is VariableDeclaration -> execute(this)
@@ -46,6 +47,11 @@ class Interpreter() {
     /** Expression statement: evaluates for side effects, discards result. */
     private fun execute(expressionStatement: ExpressionStatement) {
         expressionStatement.expression.evaluate()
+    }
+
+    private fun execute(functionStatement: FunctionStatement) {
+        val function = LoxFunction(declaration = functionStatement)
+        environment.define(name = functionStatement.name.lexeme, value = function)
     }
 
     private fun execute(ifStatement: IfStatement) {
